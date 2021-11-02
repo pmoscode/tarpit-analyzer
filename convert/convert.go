@@ -40,14 +40,8 @@ func DoConvert(pathSource string, pathTarget string, startDate string, endDate s
 		}
 	}
 
-	if debug {
-		for i := 0; i < len(lines); i++ {
-			log.Debugln(lines[i])
-		}
-
-		if len(lines) == 0 {
-			log.Debugln("Lines are empty... :(")
-		}
+	if len(lines) == 0 {
+		log.Debugln("Lines are empty... :(")
 	}
 
 	if err := sc.Err(); err != nil {
@@ -128,7 +122,7 @@ func prepareDates(dateParam string, dateLine string) (time2.Time, time2.Time, er
 	}
 
 	if debug {
-		log.Debugln("Dates to check: ", startingDateParam, " and ", startingDateLine)
+		log.Debugln("\tDates to check: ", startingDateParam, " and ", startingDateLine)
 	}
 
 	return startingDateParam, startingDateLine, nil
