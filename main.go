@@ -9,6 +9,8 @@ var cliStruct struct {
 	Debug bool `default:"false" help:"Enable debug mode."`
 
 	Convert cli.ConvertCmd `cmd:"" help:"Convert file to generic format."`
+
+	Analyze cli.AnalyzeCmd `cmd:"" help:"Analyze file."`
 }
 
 func main() {
