@@ -19,6 +19,7 @@ type ConvertCmd struct {
 
 type AnalyzeCmd struct {
 	FileSource string `arg:"" default:"tarpit-converted.log" help:"Converted log file to analyze." type:"path"`
+	FileTarget string `arg:"" default:"tarpit-analyzed.log" help:"Write analyzed data to" type:"path"`
 }
 
 func (r *ConvertCmd) Run(ctx *Context) error {
@@ -26,5 +27,5 @@ func (r *ConvertCmd) Run(ctx *Context) error {
 }
 
 func (r *AnalyzeCmd) Run(ctx *Context) error {
-	return analyze.DoAnalyze(r.FileSource, ctx.Debug)
+	return analyze.DoAnalyze(r.FileSource, r.FileTarget, ctx.Debug)
 }
