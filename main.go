@@ -8,7 +8,7 @@ import (
 var cliStruct struct {
 	Debug bool `default:"false" help:"Enable debug mode."`
 
-	Convert cli.ConvertCmd `cmd:"" help:"Convert file to generic format."`
+	Convert cli.ConvertCmd `cmd:"" help:"Convert file to generic format. Only already closed SSH sessions are processed!"`
 
 	Analyze cli.AnalyzeCmd `cmd:"" help:"Analyze file."`
 }
