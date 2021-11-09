@@ -11,6 +11,8 @@ var cliStruct struct {
 	Convert cli.ConvertCmd `cmd:"" help:"Convert file to generic format. Only already closed SSH sessions are processed!"`
 
 	Analyze cli.AnalyzeCmd `cmd:"" help:"Analyze file."`
+
+	Geo cli.GeoCmd `cmd:"" help:"Generate KML file for visualization."`
 }
 
 func main() {
