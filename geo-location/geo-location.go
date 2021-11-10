@@ -2,6 +2,8 @@ package geo_location
 
 import (
 	"bufio"
+	"endlessh-analyzer/api"
+	cachedb "endlessh-analyzer/cache-db"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -11,6 +13,8 @@ import (
 var debug = false
 
 func DoLocalization(pathSource string, pathTarget string, batchSize int, geoLocationLongitude string, geoLocationLatitude string, debugParam bool) error {
+	cachedb.Init()
+
 	debug = debugParam
 	if debug {
 		log.SetLevel(log.DebugLevel)
@@ -45,10 +49,11 @@ func DoLocalization(pathSource string, pathTarget string, batchSize int, geoLoca
 	}
 
 	ips = uniqueNonEmptyElementsOf(ips)
-
 	log.Debugln("Unique ips found: ", ips)
-	ipLocations, err := processIps(ips, batchSize)
+
+	ipLocations, cacheHits, err := processIps(ips, batchSize)
 	log.Debugln("Locations for ips: ", ipLocations)
+	log.Infoln("Locations from cache: ", cacheHits)
 
 	errOutput := writeConvertedDataToFile(ipLocations, pathTarget, geoLocationLongitude, geoLocationLatitude)
 	if errOutput != nil {
@@ -66,21 +71,45 @@ func processLine(line string) (string, error) {
 	return ip, nil
 }
 
-func processIps(ips []string, batchSize int) ([]IpLocation, error) {
+func processIps(ips []string, batchSize int) ([]api.IpLocation, int, error) {
 	ipsArraySize := len(ips)
-	ipLocations := make([]IpLocation, 0)
+	ipLocations := make([]api.IpLocation, 0)
+	batch := make([]string, 0)
+	cacheHits := 0
 
-	for i := 0; i < ipsArraySize; i += batchSize {
-		if i+batchSize >= ipsArraySize {
-			batchSize = ipsArraySize - i
+	for i := 0; i < ipsArraySize; i++ {
+		location, cacheResult := cachedb.GetLocationFor(ips[i])
+
+		if cacheResult == cachedb.CacheNoHit || cacheResult == cachedb.CacheRecordOutdated {
+			batch = append(batch, ips[i])
+		} else if cacheResult == cachedb.CacheOk {
+			cacheHits++
+			ipLocations = append(ipLocations, location)
+		} else {
+			log.Errorln("Something went wrong for ip: ", ips[i])
 		}
-
-		ipBatch := ips[i : i+batchSize]
-		resolved, _ := DoQuery(ipBatch)
-		ipLocations = append(ipLocations, resolved...)
 	}
 
-	return ipLocations, nil
+	batchCount := len(batch)
+	if batchCount > 0 {
+		ipBatchLocations := make([]api.IpLocation, 0)
+		for i := 0; i < batchCount; i += batchSize {
+			if i+batchSize >= batchCount {
+				batchSize = batchCount - i
+			}
+
+			ipBatch := batch[i : i+batchSize]
+			resolved, _ := api.DoQuery(ipBatch)
+			ipBatchLocations = append(ipBatchLocations, resolved...)
+			err := cachedb.SaveLocations(ipBatchLocations)
+			if err != nil {
+				return nil, cacheHits, err
+			}
+		}
+		ipLocations = append(ipLocations, ipBatchLocations...)
+	}
+
+	return ipLocations, cacheHits, nil
 }
 
 func uniqueNonEmptyElementsOf(s []string) []string {
@@ -98,7 +127,7 @@ func uniqueNonEmptyElementsOf(s []string) []string {
 	return us
 }
 
-func writeConvertedDataToFile(ips []IpLocation, path string, geoLocationLongitude string, geoLocationLatitude string) error {
+func writeConvertedDataToFile(ips []api.IpLocation, path string, geoLocationLongitude string, geoLocationLatitude string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		log.Errorln(err)

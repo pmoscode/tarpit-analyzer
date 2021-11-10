@@ -1,4 +1,4 @@
-package geo_location
+package api
 
 import (
 	"bytes"

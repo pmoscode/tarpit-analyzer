@@ -1,3 +1,4 @@
 .idea
 endlessh-analyzer
 test/*.*
+*.db
