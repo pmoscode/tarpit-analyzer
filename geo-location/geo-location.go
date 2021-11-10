@@ -101,7 +101,7 @@ func processIps(ips []string, batchSize int) ([]api.IpLocation, int, error) {
 			ipBatch := batch[i : i+batchSize]
 			resolved, _ := api.DoQuery(ipBatch)
 			ipBatchLocations = append(ipBatchLocations, resolved...)
-			err := cachedb.SaveLocations(ipBatchLocations)
+			err := cachedb.SaveLocations(resolved)
 			if err != nil {
 				return nil, cacheHits, err
 			}

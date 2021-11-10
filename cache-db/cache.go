@@ -3,6 +3,7 @@ package cache_db
 import (
 	geolocation "endlessh-analyzer/api"
 	"errors"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	time2 "time"
 )
@@ -43,6 +44,8 @@ func SaveLocations(locations []geolocation.IpLocation) error {
 		if err != nil {
 			return err
 		}
+
+		fmt.Print(i, " of ", len(locs), "\r")
 
 		if dbResult != DbOk {
 			log.Errorln("something went wrong for location: ", locs[i])

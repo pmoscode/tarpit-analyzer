@@ -98,10 +98,11 @@ func addOrUpdateLocation(location Location) (DbResult, error) {
 		loc.Country = location.Country
 		loc.Ip = location.Ip
 
-		db.Save(&loc)
-
-		return DbOk, nil
+		resultSave := db.Save(&loc)
+		if resultSave.Error != nil {
+			return DbError, resultSave.Error
+		}
 	}
 
-	return DbError, nil
+	return DbOk, nil
 }
