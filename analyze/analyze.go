@@ -2,6 +2,8 @@ package analyze
 
 import (
 	"bufio"
+	"endlessh-analyzer/api"
+	cachedb "endlessh-analyzer/cache-db"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -11,10 +13,12 @@ import (
 )
 
 type Result struct {
-	Tarpitted  int
-	SumSeconds int
-	Longest    int
-	Shortest   int
+	Tarpitted      int
+	SumSeconds     int
+	Longest        int
+	LongestIp      string
+	LongestCountry string
+	Shortest       int
 }
 
 var debug = false
@@ -26,6 +30,8 @@ var result = Result{
 }
 
 func DoAnalyze(pathSource string, pathTarget string, debugParam bool) error {
+	cachedb.Init()
+
 	debug = debugParam
 	if debug {
 		log.SetLevel(log.DebugLevel)
@@ -81,10 +87,36 @@ func processLine(line string) error {
 		log.Debugln("New Shortest: " + strconv.Itoa(timeInt))
 	} else if timeInt > result.Longest {
 		result.Longest = timeInt
+		result.LongestIp = chunks[1]
 		log.Debugln("New Longest: " + strconv.Itoa(timeInt))
 	}
 
 	return nil
+}
+
+func getCountryFor(ip string) (string, error) {
+	location, cacheResult := cachedb.GetLocationFor(ip)
+
+	if cacheResult == cachedb.CacheNoHit || cacheResult == cachedb.CacheRecordOutdated {
+		batch := make([]string, 1)
+		batch[0] = ip
+		resolved, errApi := api.DoQuery(batch)
+		if errApi != nil {
+			log.Warningln("Could not get Country for ip: ", ip)
+			return "", nil
+		}
+		location = resolved[0]
+		err := cachedb.SaveLocations(resolved)
+		if err != nil {
+			log.Warningln("Could not save Location in cache for: ", ip)
+		}
+	} else if cacheResult != cachedb.CacheOk {
+		log.Errorln("Something went wrong for ip: ", ip)
+	} else {
+		log.Infoln("Got ip: ", ip, " from cache: ", location)
+	}
+
+	return location.Country, nil
 }
 
 func writeConvertedDataToFile(path string) error {
@@ -100,6 +132,11 @@ func writeConvertedDataToFile(path string) error {
 	timeAvg := time2.Date(0, 0, 0, 0, 0, result.SumSeconds/result.Tarpitted, 0, time2.Local)
 	timeLongest := time2.Date(0, 0, 0, 0, 0, result.Longest, 0, time2.Local)
 	timeShortest := time2.Date(0, 0, 0, 0, 0, result.Shortest, 0, time2.Local)
+	countryLongest, err := getCountryFor(result.LongestIp)
+	countryString := ""
+	if err == nil {
+		countryString = " (" + countryLongest + ")"
+	}
 
 	_, _ = dataWriter.WriteString("Tarpitted count: " + strconv.Itoa(result.Tarpitted) + "\n")
 	_, _ = dataWriter.WriteString("Tarpitted in sec. (Sum): " + strconv.Itoa(result.SumSeconds) + "\n")
@@ -107,6 +144,7 @@ func writeConvertedDataToFile(path string) error {
 	_, _ = dataWriter.WriteString("Tarpitted in sec. (Avg): " + strconv.Itoa(result.SumSeconds/result.Tarpitted) + "\n")
 	_, _ = dataWriter.WriteString("Tarpitted in hours. (Avg): " + timeAvg.Format("15:04:05") + "\n")
 	_, _ = dataWriter.WriteString("Tarpitted in hours. (Longest): " + timeLongest.Format("15:04:05") + "\n")
+	_, _ = dataWriter.WriteString("Tarpitted IP. (Longest): " + result.LongestIp + countryString + "\n")
 	_, _ = dataWriter.WriteString("Tarpitted in hours. (Shortest): " + timeShortest.Format("15:04:05") + "\n")
 
 	errWriter := dataWriter.Flush()
