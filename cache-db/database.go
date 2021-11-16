@@ -1,6 +1,7 @@
 package cache_db
 
 import (
+	geolocation "endlessh-analyzer/api/structs"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -12,17 +13,7 @@ import (
 
 type Location struct {
 	gorm.Model
-	Ip          string `gorm:"uniqueIndex"`
-	Status      string
-	Country     string
-	CountryCode string
-	Region      string
-	RegionName  string
-	City        string
-	Zip         string
-	Lat         float64
-	Lon         float64
-	Timezone    string
+	geolocation.GeoLocationItem
 }
 
 type DbResult int
@@ -88,10 +79,9 @@ func addOrUpdateLocation(location Location) (DbResult, error) {
 	} else {
 		loc.Status = location.Status
 		loc.Zip = location.Zip
-		loc.Lat = location.Lat
-		loc.Lon = location.Lon
+		loc.Latitude = location.Latitude
+		loc.Longitude = location.Longitude
 		loc.City = location.City
-		loc.Timezone = location.Timezone
 		loc.RegionName = location.RegionName
 		loc.Region = location.Region
 		loc.CountryCode = location.CountryCode

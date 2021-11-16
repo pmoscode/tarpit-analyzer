@@ -1,7 +1,7 @@
 package cache_db
 
 import (
-	geolocation "endlessh-analyzer/api"
+	geolocation "endlessh-analyzer/api/structs"
 	"errors"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -20,23 +20,23 @@ func Init() {
 	initDatabase()
 }
 
-func GetLocationFor(ip string) (geolocation.IpLocation, CacheResult) {
+func GetLocationFor(ip string) (geolocation.GeoLocationItem, CacheResult) {
 	location, dbResult := getLocation(ip)
 	if dbResult == DbRecordNotFound {
 		log.Infoln("Record for ip: ", ip, " not found...")
-		return geolocation.IpLocation{}, CacheNoHit
+		return geolocation.GeoLocationItem{}, CacheNoHit
 	}
 
 	var maxAge float64 = 4 * 24
 	if time2.Now().Sub(location.UpdatedAt).Hours() > maxAge {
 		log.Infoln("Record for ip: ", ip, " is older than ", maxAge, " hours... Query again from Geo-Location API...")
-		return mapToIpLocation(location), CacheRecordOutdated
+		return mapToGeoLocation(location), CacheRecordOutdated
 	}
 
-	return mapToIpLocation(location), CacheOk
+	return mapToGeoLocation(location), CacheOk
 }
 
-func SaveLocations(locations []geolocation.IpLocation) error {
+func SaveLocations(locations []geolocation.GeoLocationItem) error {
 	locs := Map(locations, mapToLocation)
 
 	for i := 0; i < len(locs); i++ {
@@ -56,9 +56,25 @@ func SaveLocations(locations []geolocation.IpLocation) error {
 	return nil
 }
 
-func mapToLocation(location geolocation.IpLocation) Location {
+func mapToLocation(location geolocation.GeoLocationItem) Location {
 	return Location{
-		Ip:          location.Query,
+		GeoLocationItem: geolocation.GeoLocationItem{
+			Ip:          location.Ip,
+			Status:      location.Status,
+			Country:     location.Country,
+			CountryCode: location.CountryCode,
+			Region:      location.Region,
+			RegionName:  location.RegionName,
+			City:        location.City,
+			Zip:         location.Zip,
+			Latitude:    location.Latitude,
+			Longitude:   location.Longitude,
+		},
+	}
+}
+
+func mapToGeoLocation(location Location) geolocation.GeoLocationItem {
+	return geolocation.GeoLocationItem{
 		Status:      location.Status,
 		Country:     location.Country,
 		CountryCode: location.CountryCode,
@@ -66,29 +82,13 @@ func mapToLocation(location geolocation.IpLocation) Location {
 		RegionName:  location.RegionName,
 		City:        location.City,
 		Zip:         location.Zip,
-		Lat:         location.Lat,
-		Lon:         location.Lon,
-		Timezone:    location.Timezone,
+		Latitude:    location.Latitude,
+		Longitude:   location.Longitude,
+		Ip:          location.Ip,
 	}
 }
 
-func mapToIpLocation(location Location) geolocation.IpLocation {
-	return geolocation.IpLocation{
-		Status:      location.Status,
-		Country:     location.Country,
-		CountryCode: location.CountryCode,
-		Region:      location.Region,
-		RegionName:  location.RegionName,
-		City:        location.City,
-		Zip:         location.Zip,
-		Lat:         location.Lat,
-		Lon:         location.Lon,
-		Timezone:    location.Timezone,
-		Query:       location.Ip,
-	}
-}
-
-func Map(vs []geolocation.IpLocation, f func(location geolocation.IpLocation) Location) []Location {
+func Map(vs []geolocation.GeoLocationItem, f func(location geolocation.GeoLocationItem) Location) []Location {
 	vsm := make([]Location, len(vs))
 	for i, v := range vs {
 		vsm[i] = f(v)

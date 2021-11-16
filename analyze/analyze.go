@@ -96,11 +96,12 @@ func processLine(line string) error {
 
 func getCountryFor(ip string) (string, error) {
 	location, cacheResult := cachedb.GetLocationFor(ip)
+	geolocationApi := api.CreateGeoLocationApi(api.IpApiCom)
 
 	if cacheResult == cachedb.CacheNoHit || cacheResult == cachedb.CacheRecordOutdated {
 		batch := make([]string, 1)
 		batch[0] = ip
-		resolved, errApi := api.DoQuery(batch)
+		resolved, errApi := geolocationApi.QueryGeoLocationApi(batch)
 		if errApi != nil {
 			log.Warningln("Could not get Country for ip: ", ip)
 			return "", nil

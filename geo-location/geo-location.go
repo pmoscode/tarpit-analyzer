@@ -3,6 +3,7 @@ package geo_location
 import (
 	"bufio"
 	"endlessh-analyzer/api"
+	"endlessh-analyzer/api/structs"
 	cachedb "endlessh-analyzer/cache-db"
 	"fmt"
 	log "github.com/sirupsen/logrus"
@@ -71,9 +72,9 @@ func processLine(line string) (string, error) {
 	return ip, nil
 }
 
-func processIps(ips []string, batchSize int) ([]api.IpLocation, int, error) {
+func processIps(ips []string, batchSize int) ([]structs.GeoLocationItem, int, error) {
 	ipsArraySize := len(ips)
-	ipLocations := make([]api.IpLocation, 0)
+	ipLocations := make([]structs.GeoLocationItem, 0)
 	batch := make([]string, 0)
 	cacheHits := 0
 
@@ -90,16 +91,17 @@ func processIps(ips []string, batchSize int) ([]api.IpLocation, int, error) {
 		}
 	}
 
+	geolocationApi := api.CreateGeoLocationApi(api.IpApiCom)
 	batchCount := len(batch)
 	if batchCount > 0 {
-		ipBatchLocations := make([]api.IpLocation, 0)
+		ipBatchLocations := make([]structs.GeoLocationItem, 0)
 		for i := 0; i < batchCount; i += batchSize {
 			if i+batchSize >= batchCount {
 				batchSize = batchCount - i
 			}
 
 			ipBatch := batch[i : i+batchSize]
-			resolved, _ := api.DoQuery(ipBatch)
+			resolved, _ := geolocationApi.QueryGeoLocationApi(ipBatch)
 			ipBatchLocations = append(ipBatchLocations, resolved...)
 			err := cachedb.SaveLocations(resolved)
 			if err != nil {
@@ -127,7 +129,7 @@ func uniqueNonEmptyElementsOf(s []string) []string {
 	return us
 }
 
-func writeConvertedDataToFile(ips []api.IpLocation, path string, geoLocationLongitude string, geoLocationLatitude string) error {
+func writeConvertedDataToFile(ips []structs.GeoLocationItem, path string, geoLocationLongitude string, geoLocationLatitude string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		log.Errorln(err)
@@ -156,7 +158,7 @@ func writeConvertedDataToFile(ips []api.IpLocation, path string, geoLocationLong
 			<styleUrl>#transBluePoly</styleUrl>
 			<LineString>
 				<coordinates> 
-					` + fmt.Sprintf("%f", data.Lon) + `, ` + fmt.Sprintf("%f", data.Lat) + `
+					` + fmt.Sprintf("%f", data.Longitude) + `, ` + fmt.Sprintf("%f", data.Latitude) + `
 					` + geoLocationLongitude + `,` + geoLocationLatitude + `					
 				</coordinates>
 			</LineString>
