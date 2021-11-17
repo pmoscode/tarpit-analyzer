@@ -1,4 +1,5 @@
 .idea
 endlessh-analyzer
+build/
 test/*.*
 *.db
