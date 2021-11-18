@@ -3,7 +3,8 @@ package analyze
 import (
 	"bufio"
 	"endlessh-analyzer/api"
-	cachedb "endlessh-analyzer/cache-db"
+	cachedb "endlessh-analyzer/cache"
+	"endlessh-analyzer/cli"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -29,15 +30,15 @@ var result = Result{
 	Shortest:   math.MaxInt,
 }
 
-func DoAnalyze(pathSource string, pathTarget string, debugParam bool) error {
+func DoAnalyze(startDate string, endDate string, context *cli.Context) error {
 	cachedb.Init()
 
-	debug = debugParam
+	debug = context.Debug
 	if debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	file, err := os.Open(pathSource)
+	file, err := os.Open(startDate)
 	if err != nil {
 		log.Errorln(err)
 		return err
@@ -61,7 +62,7 @@ func DoAnalyze(pathSource string, pathTarget string, debugParam bool) error {
 
 	log.Debug("Result object: ", result)
 
-	errOutput := writeConvertedDataToFile(pathTarget)
+	errOutput := writeConvertedDataToFile(endDate)
 	if errOutput != nil {
 		return errOutput
 	}
@@ -98,7 +99,7 @@ func getCountryFor(ip string) (string, error) {
 	location, cacheResult := cachedb.GetLocationFor(ip)
 	geolocationApi := api.CreateGeoLocationApi(api.IpApiCom)
 
-	if cacheResult == cachedb.CacheNoHit || cacheResult == cachedb.CacheRecordOutdated {
+	if cacheResult == cachedb.NoHit || cacheResult == cachedb.RecordOutdated {
 		batch := make([]string, 1)
 		batch[0] = ip
 		resolved, errApi := geolocationApi.QueryGeoLocationApi(batch)
@@ -111,7 +112,7 @@ func getCountryFor(ip string) (string, error) {
 		if err != nil {
 			log.Warningln("Could not save Location in cache for: ", ip)
 		}
-	} else if cacheResult != cachedb.CacheOk {
+	} else if cacheResult != cachedb.Ok {
 		log.Errorln("Something went wrong for ip: ", ip)
 	} else {
 		log.Infoln("Got ip: ", ip, " from cache: ", location)

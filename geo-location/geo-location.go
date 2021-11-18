@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"endlessh-analyzer/api"
 	"endlessh-analyzer/api/structs"
-	cachedb "endlessh-analyzer/cache-db"
+	cachedb "endlessh-analyzer/cache"
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"os"
@@ -81,9 +81,9 @@ func processIps(ips []string, batchSize int) ([]structs.GeoLocationItem, int, er
 	for i := 0; i < ipsArraySize; i++ {
 		location, cacheResult := cachedb.GetLocationFor(ips[i])
 
-		if cacheResult == cachedb.CacheNoHit || cacheResult == cachedb.CacheRecordOutdated {
+		if cacheResult == cachedb.NoHit || cacheResult == cachedb.RecordOutdated {
 			batch = append(batch, ips[i])
-		} else if cacheResult == cachedb.CacheOk {
+		} else if cacheResult == cachedb.Ok {
 			cacheHits++
 			ipLocations = append(ipLocations, location)
 		} else {

@@ -2,6 +2,7 @@ package importData
 
 import (
 	"endlessh-analyzer/cli"
+	"endlessh-analyzer/database"
 	"endlessh-analyzer/importData/modules"
 	"endlessh-analyzer/importData/structs"
 	log "github.com/sirupsen/logrus"
@@ -33,14 +34,24 @@ func DoImport(source ImportSource, sourcePath string, context *cli.Context) erro
 
 	importAction := createImportSource(source)
 
-	importItems, err := importAction.Import(sourcePath, context)
-	if err != nil {
-		return err
+	importItems, errCreate := importAction.Import(sourcePath, context)
+	if errCreate != nil {
+		return errCreate
 	}
 
-	log.Debug(len(*importItems))
+	db, errCreate := database.CreateDbData()
+	if errCreate != nil {
+		log.Panicln("Cache database could not be loaded.", errCreate)
+	}
 
-	// Save to DB
+	result, errSave := db.SaveData(db.Map(importItems, db.MapToData))
+	if errSave != nil {
+		return errSave
+	}
+
+	if result == database.DbOk {
+		log.Debugln("Imported data saved to database")
+	}
 
 	return nil
 }

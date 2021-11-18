@@ -6,11 +6,12 @@ import (
 )
 
 type AnalyzeCmd struct {
-	FileSource string `arg:"" default:"tarpit-converted.log" help:"Converted log file to analyze." type:"path"`
-	FileTarget string `arg:"" default:"tarpit-analyzed.txt" help:"Write analyzed data to" type:"path"`
-	BatchSize  int    `default:"50" help:"Query batch size for GEO IP API (if supported by GEO IP API)."`
+	BatchSize int `default:"50" help:"Query batch size for GEO IP API (if supported by GEO IP API)."`
+
+	StartDate string `default:"unset" help:"Only consider data starting at <yyyy-mm-dd>"`
+	EndDate   string `default:"unset" help:"Only consider data ending at <yyyy-mm-dd> (including that day)"`
 }
 
 func (r *AnalyzeCmd) Run(ctx *cli.Context) error {
-	return analyze.DoAnalyze(r.FileSource, r.FileTarget, ctx.Debug)
+	return analyze.DoAnalyze(r.StartDate, r.EndDate, ctx)
 }
