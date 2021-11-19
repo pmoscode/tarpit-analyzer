@@ -14,7 +14,7 @@ import (
 var debug = false
 
 func DoLocalization(pathSource string, pathTarget string, batchSize int, geoLocationLongitude string, geoLocationLatitude string, debugParam bool) error {
-	cachedb.Init()
+	cachedb.Init(debugParam)
 
 	debug = debugParam
 	if debug {
@@ -91,7 +91,7 @@ func processIps(ips []string, batchSize int) ([]structs.GeoLocationItem, int, er
 		}
 	}
 
-	geolocationApi := api.CreateGeoLocationApi(api.IpApiCom)
+	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
 	batchCount := len(batch)
 	if batchCount > 0 {
 		ipBatchLocations := make([]structs.GeoLocationItem, 0)

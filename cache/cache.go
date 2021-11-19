@@ -4,7 +4,6 @@ import (
 	geolocation "endlessh-analyzer/api/structs"
 	"endlessh-analyzer/database"
 	"errors"
-	"fmt"
 	log "github.com/sirupsen/logrus"
 	time2 "time"
 )
@@ -19,8 +18,8 @@ const (
 
 var db database.DbCache
 
-func Init() {
-	dbInit, err := database.CreateDbCache()
+func Init(debug bool) {
+	dbInit, err := database.CreateDbCache(debug)
 	if err != nil {
 		log.Panicln("Cache database could not be loaded.", err)
 	}
@@ -47,17 +46,19 @@ func GetLocationFor(ip string) (geolocation.GeoLocationItem, Result) {
 func SaveLocations(locations []geolocation.GeoLocationItem) error {
 	locs := db.Map(locations, db.MapToLocation)
 
-	for i := 0; i < len(locs); i++ {
-		dbResult, err := db.AddOrUpdateLocation(locs[i])
-		if err != nil {
-			return err
-		}
+	for _, loc := range locs {
+		if loc.Status == "success" {
+			dbResult, err := db.AddOrUpdateLocation(loc)
+			if err != nil {
+				return err
+			}
 
-		fmt.Print(i, " of ", len(locs), "\r")
-
-		if dbResult != database.DbOk {
-			log.Errorln("something went wrong for location: ", locs[i])
-			return errors.New("something went wrong for location IP: " + locs[i].Ip)
+			if dbResult != database.DbOk {
+				log.Errorln("something went wrong for location: ", loc)
+				return errors.New("something went wrong for location IP: " + loc.Ip)
+			}
+		} else {
+			log.Warningln("Geo Location info for: ", loc.Ip, " failed: ", loc)
 		}
 	}
 

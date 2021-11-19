@@ -97,9 +97,9 @@ func (r *DbCache) Map(vs []geolocation.GeoLocationItem, f func(location geolocat
 	return vsm
 }
 
-func CreateDbCache() (DbCache, error) {
+func CreateDbCache(debug bool) (DbCache, error) {
 	db := DbCache{}
-	db.initDatabase("cache")
+	db.initDatabase("cache", debug)
 
 	err := db.db.AutoMigrate(&schemas.Location{})
 	if err != nil {

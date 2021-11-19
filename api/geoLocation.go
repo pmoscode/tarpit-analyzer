@@ -15,7 +15,7 @@ const (
 	IpApiCom Api = iota
 )
 
-func CreateGeoLocationApi(api Api) QueryGeoLocationAPI {
+func CreateGeoLocationAPI(api Api) QueryGeoLocationAPI {
 	switch api {
 	case IpApiCom:
 		return endpoints.IpApiCom{}

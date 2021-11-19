@@ -4,26 +4,111 @@ import (
 	"endlessh-analyzer/database/schemas"
 	"endlessh-analyzer/importData/structs"
 	log "github.com/sirupsen/logrus"
+	"gorm.io/gorm"
 	time2 "time"
 )
+
+type QueryParameters struct {
+	StartDate   *time2.Time
+	EndDate     *time2.Time
+	SelectQuery *string
+	WhereQuery  *WhereQuery
+	OrderBy     *string
+	Limit       *int
+}
+
+type WhereQuery struct {
+	query      string
+	parameters []interface{}
+}
 
 type DbData struct {
 	database
 }
 
-func (r DbData) GetData(startDate time2.Time, endDate time2.Time) ([]schemas.Data, DbResult) {
+func (r *DbData) timeRange(startDate *time2.Time, endDate *time2.Time) func(db *gorm.DB) *gorm.DB {
+	if startDate == nil && endDate == nil {
+		return func(db *gorm.DB) *gorm.DB {
+			return db
+		}
+	}
+
+	if startDate == nil && endDate != nil {
+		return func(db *gorm.DB) *gorm.DB {
+			return db.Where("end <= ?", &endDate)
+		}
+	}
+
+	if startDate != nil && endDate == nil {
+		return func(db *gorm.DB) *gorm.DB {
+			return db.Where("begin >= ?", &endDate)
+		}
+	}
+
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where("begin >= ? AND end <= ?", &startDate, &endDate)
+	}
+
+}
+
+func (r *DbData) query(queryParameter WhereQuery) func(db *gorm.DB) *gorm.DB {
+	return func(db *gorm.DB) *gorm.DB {
+		return db.Where(queryParameter.query, queryParameter.parameters)
+	}
+}
+
+func (r *DbData) dbQuery(queryParameters QueryParameters) *gorm.DB {
+	dbSub := r.db.Model(&schemas.Data{})
+	if queryParameters.SelectQuery != nil {
+		dbSub = dbSub.Select(*queryParameters.SelectQuery)
+	}
+	dbSub = dbSub.Scopes(r.timeRange(queryParameters.StartDate, queryParameters.EndDate))
+	if queryParameters.WhereQuery != nil {
+		dbSub = dbSub.Scopes(r.query(*queryParameters.WhereQuery))
+	}
+	if queryParameters.OrderBy != nil {
+		dbSub = dbSub.Order(*queryParameters.OrderBy)
+	}
+
+	return dbSub
+}
+
+func (r *DbData) ExecuteQueryGetList(queryParameters QueryParameters) ([]schemas.Data, DbResult) {
 	var data []schemas.Data
 
-	result := r.db.Where("begin >= ? AND end <= ?", startDate, endDate).Find(&data)
+	dbSub := r.dbQuery(queryParameters)
+	result := dbSub.Find(&data)
 
 	if result.RowsAffected == 0 {
-		return []schemas.Data{}, DbRecordNotFound
+		return data, DbRecordNotFound
 	}
 
 	return data, DbOk
 }
 
-func (r DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
+func (r *DbData) ExecuteQueryGetFirst(queryParameters QueryParameters) (schemas.Data, DbResult) {
+	var data schemas.Data
+
+	dbSub := r.dbQuery(queryParameters)
+	result := dbSub.First(&data)
+
+	if result.RowsAffected == 0 {
+		return data, DbRecordNotFound
+	}
+
+	return data, DbOk
+}
+
+func (r *DbData) ExecuteQueryGetAggregator(queryParameters QueryParameters) (float64, DbResult) {
+	var data float64
+
+	dbSub := r.dbQuery(queryParameters)
+	dbSub.First(&data)
+
+	return data, DbOk
+}
+
+func (r *DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
 	result := r.db.CreateInBatches(data, 100)
 
 	if result.Error != nil {
@@ -64,9 +149,9 @@ func (r DbData) Map(vs *[]structs.ImportItem, f func(importItem structs.ImportIt
 	return &vsm
 }
 
-func CreateDbData() (DbData, error) {
+func CreateDbData(debug bool) (DbData, error) {
 	db := DbData{}
-	db.initDatabase("data")
+	db.initDatabase("data", debug)
 
 	err := db.db.AutoMigrate(&schemas.Data{})
 	if err != nil {

@@ -2,9 +2,11 @@ package analyze
 
 import (
 	"bufio"
+	"encoding/json"
 	"endlessh-analyzer/api"
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
+	"endlessh-analyzer/database"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -22,6 +24,11 @@ type Result struct {
 	Shortest       int
 }
 
+func (r Result) String() string {
+	s, _ := json.MarshalIndent(r, "", "\t")
+	return string(s)
+}
+
 var debug = false
 var result = Result{
 	Tarpitted:  0,
@@ -31,38 +38,40 @@ var result = Result{
 }
 
 func DoAnalyze(startDate string, endDate string, context *cli.Context) error {
-	cachedb.Init()
+	cachedb.Init(context.Debug)
+
+	db, errCreate := database.CreateDbData(context.Debug)
+	if errCreate != nil {
+		log.Panicln("Data database could not be loaded.", errCreate)
+	}
 
 	debug = context.Debug
 	if debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	file, err := os.Open(startDate)
-	if err != nil {
-		log.Errorln(err)
-		return err
-	}
-	defer file.Close()
+	start := getDate(startDate)
+	end := getDate(endDate)
 
-	sc := bufio.NewScanner(file)
+	count, _ := db.ExecuteQueryGetAggregator(getQueryParametersCountAll(start, end))
+	sum, _ := db.ExecuteQueryGetAggregator(getQueryParametersSumAll(start, end))
+	longest, _ := db.ExecuteQueryGetFirst(getQueryParametersLongestDuration(start, end))
+	shortest, _ := db.ExecuteQueryGetFirst(getQueryParametersShortestDuration(start, end))
 
-	// Read through 'tokens' until an EOF is encountered.
-	for sc.Scan() {
-		text := sc.Text()
-		err := processLine(text)
-		if err != nil {
-			log.Warningln(err)
-		}
-	}
+	result.Tarpitted = int(count)
+	result.SumSeconds = int(sum)
+	result.Longest = int(longest.Duration)
+	result.LongestIp = longest.Ip
+	result.Shortest = int(shortest.Duration)
 
-	if err := sc.Err(); err != nil {
-		log.Errorln(err)
+	countryLongest, err := getCountryFor(longest.Ip)
+	if err == nil {
+		result.LongestCountry = " (" + countryLongest + ")"
 	}
 
 	log.Debug("Result object: ", result)
 
-	errOutput := writeConvertedDataToFile(endDate)
+	errOutput := writeConvertedDataToFile(context.Target)
 	if errOutput != nil {
 		return errOutput
 	}
@@ -70,34 +79,9 @@ func DoAnalyze(startDate string, endDate string, context *cli.Context) error {
 	return nil
 }
 
-func processLine(line string) error {
-	chunks := strings.Split(line, ",")
-
-	result.Tarpitted = result.Tarpitted + 1
-
-	time, err := strconv.ParseFloat(chunks[2], 32)
-	if err != nil {
-		return err
-	}
-	timeInt := int(math.Trunc(time))
-
-	result.SumSeconds = result.SumSeconds + timeInt
-
-	if timeInt < result.Shortest {
-		result.Shortest = timeInt
-		log.Debugln("New Shortest: " + strconv.Itoa(timeInt))
-	} else if timeInt > result.Longest {
-		result.Longest = timeInt
-		result.LongestIp = chunks[1]
-		log.Debugln("New Longest: " + strconv.Itoa(timeInt))
-	}
-
-	return nil
-}
-
 func getCountryFor(ip string) (string, error) {
 	location, cacheResult := cachedb.GetLocationFor(ip)
-	geolocationApi := api.CreateGeoLocationApi(api.IpApiCom)
+	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
 
 	if cacheResult == cachedb.NoHit || cacheResult == cachedb.RecordOutdated {
 		batch := make([]string, 1)
@@ -134,20 +118,15 @@ func writeConvertedDataToFile(path string) error {
 	timeAvg := time2.Date(0, 0, 0, 0, 0, result.SumSeconds/result.Tarpitted, 0, time2.Local)
 	timeLongest := time2.Date(0, 0, 0, 0, 0, result.Longest, 0, time2.Local)
 	timeShortest := time2.Date(0, 0, 0, 0, 0, result.Shortest, 0, time2.Local)
-	countryLongest, err := getCountryFor(result.LongestIp)
-	countryString := ""
-	if err == nil {
-		countryString = " (" + countryLongest + ")"
-	}
 
-	_, _ = dataWriter.WriteString("Tarpitted count: " + strconv.Itoa(result.Tarpitted) + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in sec. (Sum): " + strconv.Itoa(result.SumSeconds) + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in hours. (Sum): " + timeSum.Format("15:04:05") + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in sec. (Avg): " + strconv.Itoa(result.SumSeconds/result.Tarpitted) + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in hours. (Avg): " + timeAvg.Format("15:04:05") + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in hours. (Longest): " + timeLongest.Format("15:04:05") + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted IP. (Longest): " + result.LongestIp + countryString + "\n")
-	_, _ = dataWriter.WriteString("Tarpitted in hours. (Shortest): " + timeShortest.Format("15:04:05") + "\n")
+	writeToDataWriter(dataWriter, "Tarpitted count:", strconv.Itoa(result.Tarpitted))
+	writeToDataWriter(dataWriter, "Tarpitted in sec. (Sum):", strconv.Itoa(result.SumSeconds))
+	writeToDataWriter(dataWriter, "Tarpitted in hours. (Sum):", timeSum.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Tarpitted in sec. (Avg):", strconv.Itoa(result.SumSeconds/result.Tarpitted))
+	writeToDataWriter(dataWriter, "Tarpitted in hours. (Avg):", timeAvg.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Tarpitted in hours. (Longest):", timeLongest.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Tarpitted IP. (Longest):", result.LongestIp+result.LongestCountry)
+	writeToDataWriter(dataWriter, "Tarpitted in hours. (Shortest):", timeShortest.Format("15:04:05"))
 
 	errWriter := dataWriter.Flush()
 	if errWriter != nil {
@@ -157,6 +136,26 @@ func writeConvertedDataToFile(path string) error {
 	errFile := file.Close()
 	if errFile != nil {
 		return errFile
+	}
+
+	return nil
+}
+
+func writeToDataWriter(dataWriter *bufio.Writer, label string, value string) {
+	_, _ = dataWriter.WriteString(strings.TrimSpace(label) + " " + value + "\n")
+}
+
+func getDate(dateString string) *time2.Time {
+	if dateString != "unset" {
+		var date *time2.Time
+		var err error
+
+		*date, err = time2.Parse("2006-01-02", dateString)
+		if err != nil {
+			log.Panicln("Parameter 'StartDate' is not a valid date!")
+		}
+
+		return date
 	}
 
 	return nil

@@ -39,9 +39,9 @@ func DoImport(source ImportSource, sourcePath string, context *cli.Context) erro
 		return errCreate
 	}
 
-	db, errCreate := database.CreateDbData()
+	db, errCreate := database.CreateDbData(context.Debug)
 	if errCreate != nil {
-		log.Panicln("Cache database could not be loaded.", errCreate)
+		log.Panicln("Data database could not be loaded.", errCreate)
 	}
 
 	result, errSave := db.SaveData(db.Map(importItems, db.MapToData))
