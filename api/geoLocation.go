@@ -5,8 +5,8 @@ import (
 	"endlessh-analyzer/api/structs"
 )
 
-type GeoLocation interface {
-	QueryGeoLocationApi(ips []string) ([]structs.GeoLocationItem, error)
+type QueryGeoLocationAPI interface {
+	QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, error)
 }
 
 type Api int
@@ -15,7 +15,7 @@ const (
 	IpApiCom Api = iota
 )
 
-func CreateGeoLocationApi(api Api) GeoLocation {
+func CreateGeoLocationApi(api Api) QueryGeoLocationAPI {
 	switch api {
 	case IpApiCom:
 		return endpoints.IpApiCom{}

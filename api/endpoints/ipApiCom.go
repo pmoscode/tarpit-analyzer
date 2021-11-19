@@ -29,7 +29,7 @@ type IpApiComItem struct {
 	Query       string  `json:"query"`
 }
 
-func (c IpApiCom) QueryGeoLocationApi(ips []string) ([]structs.GeoLocationItem, error) {
+func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, error) {
 	body := "[\"" + strings.Join(ips, "\",\"") + "\"]"
 
 	resp, err := http.Post("http://ip-api.com/batch", "application/json", bytes.NewBufferString(body))

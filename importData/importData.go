@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ImportData interface {
+type Import interface {
 	Import(sourcePath string, context *cli.Context) (*[]structs.ImportItem, error)
 }
 
@@ -18,7 +18,7 @@ const (
 	Endlessh ImportSource = iota
 )
 
-func createImportSource(source ImportSource) ImportData {
+func createImportSource(source ImportSource) Import {
 	switch source {
 	case Endlessh:
 		return modules.Endlessh{}

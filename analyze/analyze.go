@@ -102,7 +102,7 @@ func getCountryFor(ip string) (string, error) {
 	if cacheResult == cachedb.NoHit || cacheResult == cachedb.RecordOutdated {
 		batch := make([]string, 1)
 		batch[0] = ip
-		resolved, errApi := geolocationApi.QueryGeoLocationApi(batch)
+		resolved, errApi := geolocationApi.QueryGeoLocationAPI(batch)
 		if errApi != nil {
 			log.Warningln("Could not get Country for ip: ", ip)
 			return "", nil

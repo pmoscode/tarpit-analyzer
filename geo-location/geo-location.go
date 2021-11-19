@@ -101,7 +101,7 @@ func processIps(ips []string, batchSize int) ([]structs.GeoLocationItem, int, er
 			}
 
 			ipBatch := batch[i : i+batchSize]
-			resolved, _ := geolocationApi.QueryGeoLocationApi(ipBatch)
+			resolved, _ := geolocationApi.QueryGeoLocationAPI(ipBatch)
 			ipBatchLocations = append(ipBatchLocations, resolved...)
 			err := cachedb.SaveLocations(resolved)
 			if err != nil {
