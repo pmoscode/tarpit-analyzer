@@ -7,6 +7,7 @@ import (
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database"
+	"endlessh-analyzer/helper"
 	log "github.com/sirupsen/logrus"
 	"math"
 	"os"
@@ -50,8 +51,8 @@ func DoAnalyze(context *cli.Context) error {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	start := getDate(context.StartDate)
-	end := getDate(context.EndDate)
+	start := helper.GetDate(context.StartDate)
+	end := helper.GetDate(context.EndDate)
 
 	count, _ := db.ExecuteQueryGetAggregator(getQueryParametersCountAll(start, end))
 	sum, _ := db.ExecuteQueryGetAggregator(getQueryParametersSumAll(start, end))
@@ -143,20 +144,4 @@ func writeConvertedDataToFile(path string) error {
 
 func writeToDataWriter(dataWriter *bufio.Writer, label string, value string) {
 	_, _ = dataWriter.WriteString(strings.TrimSpace(label) + " " + value + "\n")
-}
-
-func getDate(dateString string) *time2.Time {
-	if dateString != "unset" {
-		var date *time2.Time
-		var err error
-
-		*date, err = time2.Parse("2006-01-02", dateString)
-		if err != nil {
-			log.Panicln("Parameter 'StartDate' is not a valid date!")
-		}
-
-		return date
-	}
-
-	return nil
 }

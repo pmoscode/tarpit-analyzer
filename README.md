@@ -13,6 +13,9 @@ Add badges from somewhere like: [shields.io](https://shields.io/)
 
 A brief description of what this project does and who it's for
 
+Endlessh: https://github.com/skeeto/endlessh
+
+Python Ssh-tarpit: https://pypi.org/project/ssh-tarpit/
 
 ## Features
 
