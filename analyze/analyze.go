@@ -37,7 +37,7 @@ var result = Result{
 	Shortest:   math.MaxInt,
 }
 
-func DoAnalyze(startDate string, endDate string, context *cli.Context) error {
+func DoAnalyze(context *cli.Context) error {
 	cachedb.Init(context.Debug)
 
 	db, errCreate := database.CreateDbData(context.Debug)
@@ -50,8 +50,8 @@ func DoAnalyze(startDate string, endDate string, context *cli.Context) error {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	start := getDate(startDate)
-	end := getDate(endDate)
+	start := getDate(context.StartDate)
+	end := getDate(context.EndDate)
 
 	count, _ := db.ExecuteQueryGetAggregator(getQueryParametersCountAll(start, end))
 	sum, _ := db.ExecuteQueryGetAggregator(getQueryParametersSumAll(start, end))
