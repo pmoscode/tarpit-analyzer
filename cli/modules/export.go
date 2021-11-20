@@ -3,6 +3,7 @@ package modules
 import (
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/export"
+	log "github.com/sirupsen/logrus"
 )
 
 type ExportCmd struct {
@@ -22,9 +23,11 @@ type ExportKmlCmd struct {
 	CenterGeoLocationLongitude string `default:"10.276290870120306" help:"Longitude you wish to be the target on the map. Default: Germany"`
 }
 
-//func (r *ExportCmd) Run(ctx *cli.Context) error {
-//	return nil
-//}
+func (r *ExportCmd) Run(ctx *cli.Context) error {
+	log.Infoln("Export command is not implemented. Use the subcommands... See export --help for more information")
+
+	return nil
+}
 
 func (r *ExportCsvCmd) Run(ctx *cli.Context) error {
 	return export.CSV(r.Separator, ctx)
