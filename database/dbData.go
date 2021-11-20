@@ -1,10 +1,14 @@
 package database
 
 import (
+	"crypto"
+	"encoding/hex"
 	"endlessh-analyzer/database/schemas"
 	"endlessh-analyzer/importData/structs"
+	"fmt"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
+	"reflect"
 	time2 "time"
 )
 
@@ -109,6 +113,8 @@ func (r *DbData) ExecuteQueryGetAggregator(queryParameters QueryParameters) (flo
 }
 
 func (r *DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
+	*data = removeDuplicateValues(data)
+
 	result := r.db.CreateInBatches(data, 100)
 
 	if result.Error != nil {
@@ -120,6 +126,7 @@ func (r *DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
 
 func (r *DbData) MapToData(importItem structs.ImportItem) schemas.Data {
 	return schemas.Data{
+		ID: hex.EncodeToString(hash(importItem.Begin, importItem.End, importItem.Ip)),
 		ImportItem: structs.ImportItem{
 			Begin:    importItem.Begin,
 			End:      importItem.End,
@@ -147,6 +154,28 @@ func (r DbData) Map(vs *[]structs.ImportItem, f func(importItem structs.ImportIt
 	}
 
 	return &vsm
+}
+
+func hash(objs ...interface{}) []byte {
+	digester := crypto.MD5.New()
+	for _, ob := range objs {
+		fmt.Fprint(digester, reflect.TypeOf(ob))
+		fmt.Fprint(digester, ob)
+	}
+	return digester.Sum(nil)
+}
+
+func removeDuplicateValues(dataSlice *[]schemas.Data) []schemas.Data {
+	keys := make(map[schemas.Data]bool)
+	var list []schemas.Data
+
+	for _, entry := range *dataSlice {
+		if _, value := keys[entry]; !value {
+			keys[entry] = true
+			list = append(list, entry)
+		}
+	}
+	return list
 }
 
 func CreateDbData(debug bool) (DbData, error) {

@@ -1,11 +1,15 @@
 package schemas
 
 import (
+	"database/sql"
 	"endlessh-analyzer/importData/structs"
-	"gorm.io/gorm"
+	"time"
 )
 
 type Data struct {
-	gorm.Model
+	ID        string `gorm:"primaryKey;index"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime `gorm:"index"`
 	structs.ImportItem
 }
