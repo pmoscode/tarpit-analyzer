@@ -3,6 +3,7 @@ package modules
 import (
 	"bufio"
 	"endlessh-analyzer/cli"
+	"endlessh-analyzer/helper"
 	"endlessh-analyzer/importData/structs"
 	"errors"
 	log "github.com/sirupsen/logrus"
@@ -66,6 +67,10 @@ func (r Endlessh) processLine(line string) (structs.ImportItem, error) {
 			return structs.ImportItem{Success: false}, errDate
 		}
 		ip, errIp := r.getValue(chunks[2])
+		if helper.CheckPrivateNetwork(ip) {
+			return structs.ImportItem{Success: false}, nil
+		}
+
 		time, errTime := r.getValue(chunks[5])
 
 		if errTime != nil && errIp != nil {

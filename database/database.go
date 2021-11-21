@@ -1,6 +1,7 @@
 package database
 
 import (
+	"database/sql"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -40,7 +41,8 @@ func (r *database) initDatabase(dbFilename string, debug bool) {
 	)
 
 	db, err := gorm.Open(sqlite.Open(dbFilename+".db"), &gorm.Config{
-		Logger: newLogger,
+		Logger:      newLogger,
+		PrepareStmt: true,
 	})
 	if err != nil {
 		logrus.Errorln(err)
@@ -48,4 +50,13 @@ func (r *database) initDatabase(dbFilename string, debug bool) {
 	}
 
 	r.db = db
+}
+
+func (r *database) DbRawQuery(model interface{}, query string, parameters ...interface{}) (*sql.Rows, error) {
+	rows, err := r.db.Model(model).Raw(query, parameters).Rows()
+	if err != nil {
+		return nil, err
+	}
+
+	return rows, nil
 }
