@@ -9,6 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"reflect"
+	"strings"
 	time2 "time"
 )
 
@@ -22,8 +23,8 @@ type QueryParameters struct {
 }
 
 type WhereQuery struct {
-	query      string
-	parameters []interface{}
+	Query      string
+	Parameters interface{}
 }
 
 type DbData struct {
@@ -57,7 +58,7 @@ func (r *DbData) timeRange(startDate *time2.Time, endDate *time2.Time) func(db *
 
 func (r *DbData) query(queryParameter WhereQuery) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		return db.Where(queryParameter.query, queryParameter.parameters)
+		return db.Where(queryParameter.Query, queryParameter.Parameters)
 	}
 }
 
@@ -115,10 +116,20 @@ func (r *DbData) ExecuteQueryGetAggregator(queryParameters QueryParameters) (flo
 func (r *DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
 	*data = removeDuplicateValues(data)
 
-	result := r.db.CreateInBatches(data, 100)
+	errTx := r.db.Transaction(func(tx *gorm.DB) error {
+		for _, d := range *data {
+			res := tx.Create(&d)
+			if res.Error != nil {
+				if !strings.Contains(res.Error.Error(), "UNIQUE constraint failed") { // Theoretically should not happen
+					return res.Error
+				}
+			}
+		}
 
-	if result.Error != nil {
-		return DbError, result.Error
+		return nil
+	})
+	if errTx != nil {
+		return DbError, errTx
 	}
 
 	return DbOk, nil
@@ -147,7 +158,7 @@ func (r *DbData) MapToImportItem(data schemas.Data) structs.ImportItem {
 	}
 }
 
-func (r DbData) Map(vs *[]structs.ImportItem, f func(importItem structs.ImportItem) schemas.Data) *[]schemas.Data {
+func (r *DbData) Map(vs *[]structs.ImportItem, f func(importItem structs.ImportItem) schemas.Data) *[]schemas.Data {
 	vsm := make([]schemas.Data, len(*vs))
 	for i, v := range *vs {
 		vsm[i] = f(v)
