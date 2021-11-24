@@ -6,6 +6,7 @@ import (
 )
 
 type AnalyzeCmd struct {
+	// TODO Move to common parameters
 	BatchSize int `default:"50" help:"Query batch size for GEO IP API (if supported by GEO IP API)."`
 }
 

@@ -16,6 +16,8 @@ func (r *ImportCmd) Run(ctx *cli.Context) error {
 	switch r.Type {
 	case "endlessh":
 		return importData.DoImport(importData.Endlessh, r.FileSource, r.BatchSize, ctx)
+	case "sshTarpit":
+		return importData.DoImport(importData.SshTarpit, r.FileSource, r.BatchSize, ctx)
 	default:
 		return errors.New("import type '" + r.Type + "' not implemented")
 	}

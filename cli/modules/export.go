@@ -34,9 +34,9 @@ func (r *ExportCsvCmd) Run(ctx *cli.Context) error {
 }
 
 func (r *ExportJsonCmd) Run(ctx *cli.Context) error {
-	return nil
+	return export.JSON(ctx)
 }
 
 func (r *ExportKmlCmd) Run(ctx *cli.Context) error {
-	return nil
+	return export.KML(ctx)
 }

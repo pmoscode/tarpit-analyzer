@@ -16,6 +16,8 @@ import (
 	time2 "time"
 )
 
+// Result TODO Add: Top 3 Countries with most attacks and Sum / Avg of attacks / time
+// Result TODO Remove: Shortest
 type Result struct {
 	Tarpitted      int
 	SumSeconds     int
@@ -39,8 +41,6 @@ var result = Result{
 }
 
 func DoAnalyze(context *cli.Context) error {
-	cachedb.Init(context.Debug)
-
 	db, errCreate := database.CreateDbData(context.Debug)
 	if errCreate != nil {
 		log.Panicln("Data database could not be loaded.", errCreate)
@@ -65,7 +65,7 @@ func DoAnalyze(context *cli.Context) error {
 	result.LongestIp = longest.Ip
 	result.Shortest = int(shortest.Duration)
 
-	countryLongest, err := getCountryFor(longest.Ip)
+	countryLongest, err := getCountryFor(longest.Ip, context.Debug)
 	if err == nil {
 		result.LongestCountry = " (" + countryLongest + ")"
 	}
@@ -80,7 +80,8 @@ func DoAnalyze(context *cli.Context) error {
 	return nil
 }
 
-func getCountryFor(ip string) (string, error) {
+func getCountryFor(ip string, debug bool) (string, error) {
+	cachedb.Init(debug)
 	location, cacheResult := cachedb.GetLocationFor(ip)
 	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
 

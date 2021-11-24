@@ -1,6 +1,7 @@
 package importData
 
 import (
+	"database/sql"
 	"endlessh-analyzer/api"
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
@@ -19,12 +20,15 @@ type ImportSource int
 
 const (
 	Endlessh ImportSource = iota
+	SshTarpit
 )
 
 func createImportSource(source ImportSource) Import {
 	switch source {
 	case Endlessh:
 		return modules.Endlessh{}
+	case SshTarpit:
+		return modules.SshTarpit{}
 	}
 
 	return nil
@@ -42,7 +46,6 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 		return errCreate
 	}
 
-	cachedb.Init(context.Debug)
 	db, errCreate := database.CreateDbData(context.Debug)
 	if errCreate != nil {
 		log.Panicln("Data database could not be loaded.", errCreate)
@@ -65,20 +68,35 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 	ips := make([]string, 0)
 	for rows.Next() {
 		var ip string
-		rows.Scan(&ip)
+		err := rows.Scan(&ip)
+		if err != nil {
+			return err
+		}
 		ips = append(ips, ip)
 	}
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Errorln("Could not close query in DB.")
+		}
+	}(rows)
 
-	err := processIps(ips, batchSize)
+	err := processIps(ips, batchSize, context.Debug)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
+	// Print statistics of import
+	// Count imported items
+	// Count gathered ips
+	// Selected date range
+
 	return nil
 }
 
-func processIps(ips []string, batchSize int) error {
+func processIps(ips []string, batchSize int, debug bool) error {
+	// TODO Move GeoLocation ops into cache package
+	cachedb.Init(debug)
 	if len(ips) == 0 {
 		return nil
 	}

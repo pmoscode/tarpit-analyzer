@@ -170,8 +170,14 @@ func (r *DbData) Map(vs *[]structs.ImportItem, f func(importItem structs.ImportI
 func hash(objs ...interface{}) []byte {
 	digester := crypto.MD5.New()
 	for _, ob := range objs {
-		fmt.Fprint(digester, reflect.TypeOf(ob))
-		fmt.Fprint(digester, ob)
+		_, err1 := fmt.Fprint(digester, reflect.TypeOf(ob))
+		if err1 != nil {
+			return nil
+		}
+		_, err2 := fmt.Fprint(digester, ob)
+		if err2 != nil {
+			return nil
+		}
 	}
 	return digester.Sum(nil)
 }
