@@ -65,8 +65,8 @@ func DoAnalyze(context *cli.Context) error {
 	result.LongestIp = longest.Ip
 	result.Shortest = int(shortest.Duration)
 
-	countryLongest, err := getCountryFor(longest.Ip, context.Debug)
-	if err == nil {
+	countryLongest := getCountryFor(longest.Ip, context.Debug)
+	if countryLongest != "" {
 		result.LongestCountry = " (" + countryLongest + ")"
 	}
 
@@ -80,31 +80,15 @@ func DoAnalyze(context *cli.Context) error {
 	return nil
 }
 
-func getCountryFor(ip string, debug bool) (string, error) {
-	cachedb.Init(debug)
-	location, cacheResult := cachedb.GetLocationFor(ip)
-	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
+func getCountryFor(ip string, debug bool) string {
+	cachedb.Init(api.IpApiCom, debug)
+	location := cachedb.GetLocationFor(ip)
 
-	if cacheResult == cachedb.NoHit || cacheResult == cachedb.RecordOutdated {
-		batch := make([]string, 1)
-		batch[0] = ip
-		resolved, errApi := geolocationApi.QueryGeoLocationAPI(batch)
-		if errApi != nil {
-			log.Warningln("Could not get Country for ip: ", ip)
-			return "", nil
-		}
-		location = resolved[0]
-		err := cachedb.SaveLocations(resolved)
-		if err != nil {
-			log.Warningln("Could not save Location in cache for: ", ip)
-		}
-	} else if cacheResult != cachedb.Ok {
-		log.Errorln("Something went wrong for ip: ", ip)
-	} else {
-		log.Infoln("Got ip: ", ip, " from cache: ", location)
+	if location == nil {
+		return ""
 	}
 
-	return location.Country, nil
+	return location.Country
 }
 
 func writeConvertedDataToFile(path string) error {

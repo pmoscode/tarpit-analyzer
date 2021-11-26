@@ -13,26 +13,24 @@ import (
 type IpApiCom struct{}
 
 type IpApiComItem struct {
-	Status      string  `json:"status"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"countryCode"`
-	Region      string  `json:"region"`
-	RegionName  string  `json:"regionName"`
-	City        string  `json:"city"`
-	Zip         string  `json:"zip"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-	Timezone    string  `json:"timezone"`
-	Isp         string  `json:"isp"`
-	Org         string  `json:"org"`
-	As          string  `json:"as"`
-	Query       string  `json:"query"`
+	Status        string  `json:"status"`
+	Country       string  `json:"country"`
+	Continent     string  `json:"continent"`
+	ContinentCode string  `json:"continentCode"`
+	CountryCode   string  `json:"countryCode"`
+	Region        string  `json:"region"`
+	RegionName    string  `json:"regionName"`
+	City          string  `json:"city"`
+	Zip           string  `json:"zip"`
+	Lat           float64 `json:"lat"`
+	Lon           float64 `json:"lon"`
+	Query         string  `json:"query"`
 }
 
 func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, error) {
 	body := "[\"" + strings.Join(ips, "\",\"") + "\"]"
 
-	resp, err := http.Post("http://ip-api.com/batch", "application/json", bytes.NewBufferString(body))
+	resp, err := http.Post("http://ip-api.com/batch?fields=status,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,query", "application/json", bytes.NewBufferString(body))
 	if err != nil {
 		log.Warningln("No response from request")
 	}
@@ -53,6 +51,14 @@ func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, 
 		return mappedLocations, nil
 	}
 
+	if resp.StatusCode == 422 {
+		log.Warningln("Max --batch-size is 100!")
+	}
+
+	if resp.StatusCode == 429 {
+		log.Warningln("Max requests (15) per minute reached!")
+	}
+
 	return nil, errors.New("got response from api: " + resp.Status)
 }
 
@@ -63,16 +69,18 @@ func mapToGeoLocationItem(items *[]IpApiComItem) ([]structs.GeoLocationItem, err
 	if count != 0 {
 		for idx, item := range *items {
 			target := structs.GeoLocationItem{
-				Ip:          item.Query,
-				Status:      item.Status,
-				Latitude:    item.Lat,
-				Longitude:   item.Lon,
-				Country:     item.Country,
-				CountryCode: item.CountryCode,
-				Region:      item.Region,
-				RegionName:  item.RegionName,
-				City:        item.City,
-				Zip:         item.Zip,
+				Ip:            item.Query,
+				Status:        item.Status,
+				Latitude:      item.Lat,
+				Longitude:     item.Lon,
+				Continent:     item.Continent,
+				ContinentCode: item.ContinentCode,
+				Country:       item.Country,
+				CountryCode:   item.CountryCode,
+				Region:        item.Region,
+				RegionName:    item.RegionName,
+				City:          item.City,
+				Zip:           item.Zip,
 			}
 			locations[idx] = target
 		}

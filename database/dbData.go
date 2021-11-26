@@ -6,6 +6,7 @@ import (
 	"endlessh-analyzer/database/schemas"
 	"endlessh-analyzer/importData/structs"
 	"fmt"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"reflect"
@@ -115,16 +116,20 @@ func (r *DbData) ExecuteQueryGetAggregator(queryParameters QueryParameters) (flo
 
 func (r *DbData) SaveData(data *[]schemas.Data) (DbResult, error) {
 	*data = removeDuplicateValues(data)
+	sum := len(*data)
+	bar := progressbar.Default(int64(sum), "Saving...")
 
 	errTx := r.db.Transaction(func(tx *gorm.DB) error {
 		for _, d := range *data {
 			res := tx.Create(&d)
+			bar.Add(1)
 			if res.Error != nil {
 				if !strings.Contains(res.Error.Error(), "UNIQUE constraint failed") { // Theoretically should not happen
 					return res.Error
 				}
 			}
 		}
+		bar.Finish()
 
 		return nil
 	})

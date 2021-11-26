@@ -19,10 +19,7 @@ Python Ssh-tarpit: https://pypi.org/project/ssh-tarpit/
 
 ## Features
 
-- Light/dark mode toggle
-- Live previews
-- Fullscreen mode
-- Cross platform
+- Progressbar: https://github.com/schollz/progressbar
 
 
 ## Installation

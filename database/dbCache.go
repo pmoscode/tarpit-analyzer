@@ -43,6 +43,8 @@ func (r *DbCache) AddOrUpdateLocation(location schemas.Location) (DbResult, erro
 		loc.City = location.City
 		loc.RegionName = location.RegionName
 		loc.Region = location.Region
+		loc.Continent = location.Continent
+		loc.ContinentCode = location.ContinentCode
 		loc.CountryCode = location.CountryCode
 		loc.Country = location.Country
 		loc.Ip = location.Ip
@@ -56,35 +58,54 @@ func (r *DbCache) AddOrUpdateLocation(location schemas.Location) (DbResult, erro
 	return DbOk, nil
 }
 
+func (r *DbCache) DeleteLocation(location geolocation.GeoLocationItem) error {
+	var loc schemas.Location
+	resultSelect := r.db.Where("ip = ?", location.Ip).First(&loc)
+
+	if resultSelect.Error != nil {
+		return resultSelect.Error
+	}
+
+	if resultSelect.RowsAffected > 0 {
+		r.db.Delete(loc)
+	}
+
+	return nil
+}
+
 func (r *DbCache) MapToLocation(location geolocation.GeoLocationItem) schemas.Location {
 	return schemas.Location{
 		GeoLocationItem: geolocation.GeoLocationItem{
-			Ip:          location.Ip,
-			Status:      location.Status,
-			Country:     location.Country,
-			CountryCode: location.CountryCode,
-			Region:      location.Region,
-			RegionName:  location.RegionName,
-			City:        location.City,
-			Zip:         location.Zip,
-			Latitude:    location.Latitude,
-			Longitude:   location.Longitude,
+			Ip:            location.Ip,
+			Status:        location.Status,
+			Continent:     location.Continent,
+			ContinentCode: location.ContinentCode,
+			Country:       location.Country,
+			CountryCode:   location.CountryCode,
+			Region:        location.Region,
+			RegionName:    location.RegionName,
+			City:          location.City,
+			Zip:           location.Zip,
+			Latitude:      location.Latitude,
+			Longitude:     location.Longitude,
 		},
 	}
 }
 
 func (r *DbCache) MapToGeoLocation(location schemas.Location) geolocation.GeoLocationItem {
 	return geolocation.GeoLocationItem{
-		Status:      location.Status,
-		Country:     location.Country,
-		CountryCode: location.CountryCode,
-		Region:      location.Region,
-		RegionName:  location.RegionName,
-		City:        location.City,
-		Zip:         location.Zip,
-		Latitude:    location.Latitude,
-		Longitude:   location.Longitude,
-		Ip:          location.Ip,
+		Status:        location.Status,
+		Continent:     location.Continent,
+		ContinentCode: location.ContinentCode,
+		Country:       location.Country,
+		CountryCode:   location.CountryCode,
+		Region:        location.Region,
+		RegionName:    location.RegionName,
+		City:          location.City,
+		Zip:           location.Zip,
+		Latitude:      location.Latitude,
+		Longitude:     location.Longitude,
+		Ip:            location.Ip,
 	}
 }
 

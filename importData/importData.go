@@ -7,13 +7,16 @@ import (
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database"
 	"endlessh-analyzer/database/schemas"
+	"endlessh-analyzer/helper"
 	"endlessh-analyzer/importData/modules"
 	"endlessh-analyzer/importData/structs"
+	"fmt"
 	log "github.com/sirupsen/logrus"
+	time2 "time"
 )
 
 type Import interface {
-	Import(sourcePath string, context *cli.Context) (*[]structs.ImportItem, error)
+	Import(sourcePath string, start *time2.Time, end *time2.Time, context *cli.Context) (*[]structs.ImportItem, int, int, error) // int, int == processed and skipped lines
 }
 
 type ImportSource int
@@ -39,27 +42,45 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 		log.Infoln("--target was set to '" + context.Target + "', but is actually unused for import command...")
 	}
 
+	start := helper.GetDate(context.StartDate)
+	end := helper.GetDate(context.EndDate)
+
+	if start != nil {
+		log.Infoln("Starting at date: ", context.StartDate)
+	}
+	if end != nil {
+		log.Infoln("Stopping at date: ", context.EndDate)
+	}
+
 	importAction := createImportSource(source)
 
-	importItems, errCreate := importAction.Import(sourcePath, context)
+	log.Infoln("####### [Start] Reading file #######")
+	importItems, processedLines, skippedLines, errCreate := importAction.Import(sourcePath, start, end, context)
 	if errCreate != nil {
 		return errCreate
 	}
+	fmt.Println()
+	log.Infoln("Processed lines: ", processedLines)
+	log.Infoln("Skipped lines: ", skippedLines)
+	log.Infoln("####### [End] Reading file #######")
 
 	db, errCreate := database.CreateDbData(context.Debug)
 	if errCreate != nil {
 		log.Panicln("Data database could not be loaded.", errCreate)
 	}
 
+	log.Infoln("####### [Start] Saving to database #######")
 	result, errSave := db.SaveData(db.Map(importItems, db.MapToData))
 	if errSave != nil {
 		return errSave
 	}
+	log.Infoln("####### [End] Saving to database #######")
 
 	if result == database.DbOk {
 		log.Debugln("Imported data saved to database")
 	}
 
+	cachedb.Init(api.IpApiCom, context.Debug)
 	rows, errQuery := db.DbRawQuery(schemas.Location{}, getQueryParametersUnlocalizedIps())
 	if errQuery != nil {
 		return errQuery
@@ -81,40 +102,19 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 		}
 	}(rows)
 
-	err := processIps(ips, batchSize, context.Debug)
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	// Print statistics of import
-	// Count imported items
-	// Count gathered ips
-	// Selected date range
+	log.Infoln("####### [Start] Processing IP's #######")
+	processIps(ips, batchSize)
+	log.Infoln("####### [End] Processing IP's #######")
 
 	return nil
 }
 
-func processIps(ips []string, batchSize int, debug bool) error {
-	// TODO Move GeoLocation ops into cache package
-	cachedb.Init(debug)
+func processIps(ips []string, batchSize int) {
 	if len(ips) == 0 {
-		return nil
+		log.Infoln("No IP's to process...")
+		return
 	}
 
-	batchCount := len(ips)
-	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
-	for i := 0; i < batchCount; i += batchSize {
-		if i+batchSize >= batchCount {
-			batchSize = batchCount - i
-		}
-
-		ipBatch := ips[i : i+batchSize]
-		resolved, _ := geolocationApi.QueryGeoLocationAPI(ipBatch)
-		err := cachedb.SaveLocations(resolved)
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
+	processedIps := cachedb.ResoleLocationsFor(ips, batchSize)
+	log.Infoln("Processed IP's: ", processedIps)
 }

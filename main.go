@@ -10,7 +10,7 @@ var cliStruct struct {
 	Debug     bool   `short:"d" default:"false" help:"Enable debug mode."`
 	Target    string `short:"t" help:"filename where output should be saved" type:"path"`
 	StartDate string `default:"unset" help:"Only consider data starting at <yyyy-mm-dd>"`
-	EndDate   string `default:"unset" help:"Only consider data ending at <yyyy-mm-dd> (including that day)"`
+	EndDate   string `default:"unset" help:"Only consider data ending at <yyyy-mm-dd>"`
 
 	Import  modules.ImportCmd  `cmd:"" help:"ImportCmd logs from different tarpit apps."`
 	Analyze modules.AnalyzeCmd `cmd:"" help:"Analyze file."`

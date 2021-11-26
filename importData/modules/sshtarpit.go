@@ -3,7 +3,9 @@ package modules
 import (
 	"bufio"
 	"endlessh-analyzer/cli"
+	"endlessh-analyzer/helper"
 	"endlessh-analyzer/importData/structs"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
@@ -24,7 +26,7 @@ type SshTarpit struct {
 	debug bool
 }
 
-func (r SshTarpit) Import(sourcePath string, context *cli.Context) (*[]structs.ImportItem, error) {
+func (r SshTarpit) Import(sourcePath string, start *time2.Time, end *time2.Time, context *cli.Context) (*[]structs.ImportItem, int, int, error) {
 	r.debug = context.Debug
 	if r.debug {
 		log.SetLevel(log.DebugLevel)
@@ -36,22 +38,34 @@ func (r SshTarpit) Import(sourcePath string, context *cli.Context) (*[]structs.I
 	file, err := os.Open(sourcePath)
 	if err != nil {
 		log.Errorln(err)
-		return nil, err
+		return nil, 0, 0, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
 
 	sc := bufio.NewScanner(file)
+	processedLine := 1
+	skipLines := 0
+	bar := progressbar.Default(-1)
 
-	// Read through 'tokens' until an EOF is encountered.
 	for sc.Scan() {
 		text := sc.Text()
 		item, err := r.processLine(tempMap, text)
 		if err != nil {
 			log.Warningln(err)
 		} else {
-			if item.Success {
+			processLine := helper.IsAfter(item.Begin, start) && helper.IsBefore(item.End, end)
+			if item.Success && processLine {
 				items = append(items, item)
+				processedLine++
+			} else if !processLine {
+				skipLines++
 			}
+			bar.Add(1)
 		}
 	}
 
@@ -63,7 +77,7 @@ func (r SshTarpit) Import(sourcePath string, context *cli.Context) (*[]structs.I
 		log.Errorln(err)
 	}
 
-	return &items, nil
+	return &items, processedLine, skipLines, nil
 }
 
 func (r SshTarpit) processLine(tempMap map[int64]SshTarpitItem, line string) (structs.ImportItem, error) {
@@ -79,6 +93,9 @@ func (r SshTarpit) processLine(tempMap map[int64]SshTarpitItem, line string) (st
 		}
 
 		ip := strings.Split(chunks[5], "'")[1]
+		if helper.CheckPrivateNetwork(ip) {
+			return structs.ImportItem{Success: false}, nil
+		}
 
 		port, errPort := strconv.ParseInt(strings.TrimRight(chunks[6], ")"), 10, 64)
 		if errPort != nil {

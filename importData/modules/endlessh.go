@@ -6,6 +6,7 @@ import (
 	"endlessh-analyzer/helper"
 	"endlessh-analyzer/importData/structs"
 	"errors"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"strconv"
@@ -17,7 +18,7 @@ type Endlessh struct {
 	debug bool
 }
 
-func (r Endlessh) Import(sourcePath string, context *cli.Context) (*[]structs.ImportItem, error) {
+func (r Endlessh) Import(sourcePath string, start *time2.Time, end *time2.Time, context *cli.Context) (*[]structs.ImportItem, int, int, error) {
 	r.debug = context.Debug
 	if r.debug {
 		log.SetLevel(log.DebugLevel)
@@ -28,22 +29,35 @@ func (r Endlessh) Import(sourcePath string, context *cli.Context) (*[]structs.Im
 	file, err := os.Open(sourcePath)
 	if err != nil {
 		log.Errorln(err)
-		return nil, err
+		return nil, 0, 0, err
 	}
-	defer file.Close()
+	defer func(file *os.File) {
+		err := file.Close()
+		if err != nil {
+			return
+		}
+	}(file)
 
 	sc := bufio.NewScanner(file)
+	processedLine := 0
+	skipLines := 0
+	bar := progressbar.Default(-1)
 
-	// Read through 'tokens' until an EOF is encountered.
 	for sc.Scan() {
 		text := sc.Text()
 		item, err := r.processLine(text)
 		if err != nil {
 			log.Warningln(err)
 		} else {
-			if item.Success {
+			processLine := helper.IsAfter(item.Begin, start) && helper.IsBefore(item.End, end)
+			if item.Success && processLine {
 				items = append(items, item)
+
+				processedLine++
+			} else if !processLine {
+				skipLines++
 			}
+			bar.Add(1)
 		}
 	}
 
@@ -55,7 +69,7 @@ func (r Endlessh) Import(sourcePath string, context *cli.Context) (*[]structs.Im
 		log.Errorln(err)
 	}
 
-	return &items, nil
+	return &items, processedLine, skipLines, nil
 }
 
 func (r Endlessh) processLine(line string) (structs.ImportItem, error) {
