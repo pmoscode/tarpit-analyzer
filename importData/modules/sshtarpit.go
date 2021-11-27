@@ -103,13 +103,24 @@ func (r SshTarpit) processLine(tempMap map[int64]SshTarpitItem, line string) (st
 			return structs.ImportItem{Success: false}, errPort
 		}
 
+		status := chunks[7]
+
 		if value, exist := tempMap[port]; exist {
-			value.end = date
-			value.duration = float32(date.Sub(value.start).Seconds())
+			if status == "connected" {
+				value := SshTarpitItem{
+					start: date,
+					ip:    ip,
+					port:  port,
+				}
+				tempMap[port] = value
+			} else {
+				value.end = date
+				value.duration = float32(date.Sub(value.start).Seconds())
 
-			delete(tempMap, port)
+				delete(tempMap, port)
 
-			return r.mapToImportItem(value)
+				return r.mapToImportItem(value)
+			}
 		} else {
 			value := SshTarpitItem{
 				start: date,
