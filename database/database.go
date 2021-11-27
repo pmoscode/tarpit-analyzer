@@ -60,3 +60,12 @@ func (r *database) DbRawQuery(model interface{}, query string, parameters ...int
 
 	return rows, nil
 }
+
+func (r *database) ScanToStruct(rows *sql.Rows, model interface{}) error {
+	err := r.db.ScanRows(rows, model)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

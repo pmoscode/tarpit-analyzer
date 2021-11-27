@@ -20,6 +20,7 @@ Python Ssh-tarpit: https://pypi.org/project/ssh-tarpit/
 ## Features
 
 - Progressbar: https://github.com/schollz/progressbar
+- Duration format: https://golangexample.com/better-time-duration-formatting-in-go/
 
 
 ## Installation

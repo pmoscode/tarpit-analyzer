@@ -30,10 +30,29 @@ func getQueryParametersLongestDuration(start *time2.Time, end *time2.Time) datab
 	}
 }
 
-func getQueryParametersShortestDuration(start *time2.Time, end *time2.Time) database.QueryParameters {
-	return database.QueryParameters{
-		StartDate: start,
-		EndDate:   end,
-		OrderBy:   helper.String("duration"),
+func getRawTopCountriesAttacks(start *time2.Time, end *time2.Time) string {
+	whereStringStart := ""
+	if start != nil {
+		whereStringStart = "d.begin >= \"" + start.Format("2006-01-02") + "\" "
 	}
+
+	whereStringEnd := ""
+	if end != nil {
+		if whereStringStart != "" {
+			whereStringEnd = " and "
+		}
+		whereStringEnd = whereStringEnd + "d.end <= \"" + end.Format("2006-01-02") + "\" "
+	}
+
+	whereString := ""
+	if whereStringStart != "" || whereStringEnd != "" {
+		whereString = "WHERE " + whereStringStart + whereStringEnd + " "
+	}
+
+	return "SELECT l.country, count(d.id) as sum_attacks, CAST(sum(d.duration) as INT) as sum_time, CAST(round(avg(d.duration), 0) as INT) as avg_time " +
+		"from data d JOIN locations l ON d.ip = l.ip " +
+		whereString +
+		"GROUP BY l.country " +
+		"ORDER BY sum_attacks DESC " +
+		"LIMIT 5"
 }

@@ -2,29 +2,36 @@ package analyze
 
 import (
 	"bufio"
+	"database/sql"
 	"encoding/json"
 	"endlessh-analyzer/api"
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database"
 	"endlessh-analyzer/helper"
+	"github.com/hako/durafmt"
 	log "github.com/sirupsen/logrus"
-	"math"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 	"os"
 	"strconv"
-	"strings"
 	time2 "time"
 )
 
-// Result TODO Add: Top 3 Countries with most attacks and Sum / Avg of attacks / time
-// Result TODO Remove: Shortest
+type Chart struct {
+	Country    string `gorm:"column:country"`
+	SumAttacks int64  `gorm:"column:sum_attacks"`
+	SumTime    int64  `gorm:"column:sum_time"`
+	AvgTime    int64  `gorm:"column:avg_time"`
+}
+
 type Result struct {
 	Tarpitted      int
 	SumSeconds     int
 	Longest        int
 	LongestIp      string
 	LongestCountry string
-	Shortest       int
+	Charts         []Chart
 }
 
 func (r Result) String() string {
@@ -37,7 +44,6 @@ var result = Result{
 	Tarpitted:  0,
 	SumSeconds: 0,
 	Longest:    0,
-	Shortest:   math.MaxInt,
 }
 
 func DoAnalyze(context *cli.Context) error {
@@ -57,13 +63,32 @@ func DoAnalyze(context *cli.Context) error {
 	count, _ := db.ExecuteQueryGetAggregator(getQueryParametersCountAll(start, end))
 	sum, _ := db.ExecuteQueryGetAggregator(getQueryParametersSumAll(start, end))
 	longest, _ := db.ExecuteQueryGetFirst(getQueryParametersLongestDuration(start, end))
-	shortest, _ := db.ExecuteQueryGetFirst(getQueryParametersShortestDuration(start, end))
+	rowsTop, errQuery := db.DbRawQuery(Chart{}, getRawTopCountriesAttacks(start, end))
+	if errQuery != nil {
+		return errQuery
+	}
+
+	charts := make([]Chart, 0)
+	for rowsTop.Next() {
+		var chart Chart
+		err := db.ScanToStruct(rowsTop, &chart)
+		if err != nil {
+			return err
+		}
+		charts = append(charts, chart)
+	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			log.Errorln("Could not close query in DB.")
+		}
+	}(rowsTop)
 
 	result.Tarpitted = int(count)
 	result.SumSeconds = int(sum)
 	result.Longest = int(longest.Duration)
 	result.LongestIp = longest.Ip
-	result.Shortest = int(shortest.Duration)
+	result.Charts = charts
 
 	countryLongest := getCountryFor(longest.Ip, context.Debug)
 	if countryLongest != "" {
@@ -103,16 +128,30 @@ func writeConvertedDataToFile(path string) error {
 	timeSum := time2.Date(0, 0, 0, 0, 0, result.SumSeconds, 0, time2.Local)
 	timeAvg := time2.Date(0, 0, 0, 0, 0, result.SumSeconds/result.Tarpitted, 0, time2.Local)
 	timeLongest := time2.Date(0, 0, 0, 0, 0, result.Longest, 0, time2.Local)
-	timeShortest := time2.Date(0, 0, 0, 0, 0, result.Shortest, 0, time2.Local)
 
-	writeToDataWriter(dataWriter, "Tarpitted count:", strconv.Itoa(result.Tarpitted))
-	writeToDataWriter(dataWriter, "Tarpitted in sec. (Sum):", strconv.Itoa(result.SumSeconds))
-	writeToDataWriter(dataWriter, "Tarpitted in hours. (Sum):", timeSum.Format("15:04:05"))
-	writeToDataWriter(dataWriter, "Tarpitted in sec. (Avg):", strconv.Itoa(result.SumSeconds/result.Tarpitted))
-	writeToDataWriter(dataWriter, "Tarpitted in hours. (Avg):", timeAvg.Format("15:04:05"))
-	writeToDataWriter(dataWriter, "Tarpitted in hours. (Longest):", timeLongest.Format("15:04:05"))
-	writeToDataWriter(dataWriter, "Tarpitted IP. (Longest):", result.LongestIp+result.LongestCountry)
-	writeToDataWriter(dataWriter, "Tarpitted in hours. (Shortest):", timeShortest.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Overall tarpitted count: "+strconv.Itoa(result.Tarpitted))
+	writeToDataWriter(dataWriter, "Sum of tarpitted in seconds: "+strconv.Itoa(result.SumSeconds))
+	writeToDataWriter(dataWriter, "Sum of tarpitted in hours: "+timeSum.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Average tarpitted in seconds: "+strconv.Itoa(result.SumSeconds/result.Tarpitted))
+	writeToDataWriter(dataWriter, "Average tarpitted in hours: "+timeAvg.Format("15:04:05"))
+	writeToDataWriter(dataWriter, "Longest tarpitted: "+timeLongest.Format("__2 days 15 hours 04 minutes 05 seconds"))
+	writeToDataWriter(dataWriter, "Longest tarpitted IP: "+result.LongestIp+result.LongestCountry)
+
+	for idx, chart := range result.Charts {
+		sumT, _ := time2.ParseDuration(strconv.Itoa(int(chart.SumTime)) + "s")
+		avgT, _ := time2.ParseDuration(strconv.Itoa(int(chart.AvgTime)) + "s")
+
+		sumTFormat, _ := durafmt.ParseString(sumT.String())
+		avgTFormat, _ := durafmt.ParseString(avgT.String())
+
+		p := message.NewPrinter(language.English)
+		sumAString := p.Sprint(chart.SumAttacks)
+
+		writeToDataWriter(dataWriter, "TOP "+strconv.Itoa(idx+1)+" attacker from "+chart.Country+":")
+		writeToDataWriter(dataWriter, "\tAttacks: "+sumAString)
+		writeToDataWriter(dataWriter, "\tOverall attack time: "+sumTFormat.String())
+		writeToDataWriter(dataWriter, "\tAverage attack time: "+avgTFormat.String())
+	}
 
 	errWriter := dataWriter.Flush()
 	if errWriter != nil {
@@ -127,6 +166,6 @@ func writeConvertedDataToFile(path string) error {
 	return nil
 }
 
-func writeToDataWriter(dataWriter *bufio.Writer, label string, value string) {
-	_, _ = dataWriter.WriteString(strings.TrimSpace(label) + " " + value + "\n")
+func writeToDataWriter(dataWriter *bufio.Writer, value string) {
+	_, _ = dataWriter.WriteString(value + "\n")
 }
