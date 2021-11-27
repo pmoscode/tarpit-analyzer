@@ -124,18 +124,20 @@ func writeConvertedDataToFile(path string) error {
 	}
 
 	dataWriter := bufio.NewWriter(file)
+	p := message.NewPrinter(language.English)
 
-	timeSum := time2.Date(0, 0, 0, 0, 0, result.SumSeconds, 0, time2.Local)
-	timeAvg := time2.Date(0, 0, 0, 0, 0, result.SumSeconds/result.Tarpitted, 0, time2.Local)
-	timeLongest := time2.Date(0, 0, 0, 0, 0, result.Longest, 0, time2.Local)
+	timeSum, _ := time2.ParseDuration(strconv.Itoa(result.SumSeconds) + "s")
+	timeAvg, _ := time2.ParseDuration(strconv.Itoa(result.SumSeconds/result.Tarpitted) + "s")
+	timeLongest, _ := time2.ParseDuration(strconv.Itoa(result.Longest) + "s")
 
-	writeToDataWriter(dataWriter, "Overall tarpitted count: "+strconv.Itoa(result.Tarpitted))
-	writeToDataWriter(dataWriter, "Sum of tarpitted in seconds: "+strconv.Itoa(result.SumSeconds))
-	writeToDataWriter(dataWriter, "Sum of tarpitted in hours: "+timeSum.Format("15:04:05"))
-	writeToDataWriter(dataWriter, "Average tarpitted in seconds: "+strconv.Itoa(result.SumSeconds/result.Tarpitted))
-	writeToDataWriter(dataWriter, "Average tarpitted in hours: "+timeAvg.Format("15:04:05"))
-	writeToDataWriter(dataWriter, "Longest tarpitted: "+timeLongest.Format("__2 days 15 hours 04 minutes 05 seconds"))
-	writeToDataWriter(dataWriter, "Longest tarpitted IP: "+result.LongestIp+result.LongestCountry)
+	timeSumFormat, _ := durafmt.ParseString(timeSum.String())
+	timeAvgFormat, _ := durafmt.ParseString(timeAvg.String())
+	timeLongestFormat, _ := durafmt.ParseString(timeLongest.String())
+
+	writeToDataWriter(dataWriter, "Overall tarpitted count: "+p.Sprint(result.Tarpitted))
+	writeToDataWriter(dataWriter, "Sum of tarpitted: "+timeSumFormat.String())
+	writeToDataWriter(dataWriter, "Average tarpitted: "+timeAvgFormat.String())
+	writeToDataWriter(dataWriter, "Longest tarpitted IP: "+result.LongestIp+result.LongestCountry+" => "+timeLongestFormat.String())
 
 	for idx, chart := range result.Charts {
 		sumT, _ := time2.ParseDuration(strconv.Itoa(int(chart.SumTime)) + "s")
@@ -144,11 +146,8 @@ func writeConvertedDataToFile(path string) error {
 		sumTFormat, _ := durafmt.ParseString(sumT.String())
 		avgTFormat, _ := durafmt.ParseString(avgT.String())
 
-		p := message.NewPrinter(language.English)
-		sumAString := p.Sprint(chart.SumAttacks)
-
 		writeToDataWriter(dataWriter, "TOP "+strconv.Itoa(idx+1)+" attacker from "+chart.Country+":")
-		writeToDataWriter(dataWriter, "\tAttacks: "+sumAString)
+		writeToDataWriter(dataWriter, "\tAttacks: "+p.Sprint(chart.SumAttacks))
 		writeToDataWriter(dataWriter, "\tOverall attack time: "+sumTFormat.String())
 		writeToDataWriter(dataWriter, "\tAverage attack time: "+avgTFormat.String())
 	}
