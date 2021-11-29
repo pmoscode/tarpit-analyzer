@@ -8,51 +8,41 @@ import (
 
 var debug = false
 
+type Parameters struct {
+	Separator                  string
+	CenterGeoLocationLatitude  string
+	CenterGeoLocationLongitude string
+}
+
 type Export interface {
 	Export(data *[]schemas.Data) (*[]string, error)
 }
 
-func CSV(separator string, context *cli.Context) error {
+type Type int
+
+const (
+	CSV Type = iota
+	JSON
+	KML
+)
+
+func DoExport(exportType Type, parameters Parameters, context *cli.Context) error {
 	data := getData(context)
 
 	var exporter Export
-	exporter = &modules.CSV{Separator: separator}
-	exportData, err := exporter.Export(&data)
-	if err != nil {
-		return err
+	switch exportType {
+	case CSV:
+		exporter = &modules.CSV{Separator: parameters.Separator}
+	case JSON:
+		exporter = &modules.JSON{}
+	case KML:
+		exporter = &modules.KML{
+			CenterGeoLocationLongitude: parameters.CenterGeoLocationLongitude,
+			CenterGeoLocationLatitude:  parameters.CenterGeoLocationLatitude,
+			Debug:                      context.Debug,
+		}
 	}
 
-	err = writeDataToFile(context.Target, exportData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func JSON(context *cli.Context) error {
-	data := getData(context)
-
-	var exporter Export
-	exporter = &modules.JSON{}
-	exportData, err := exporter.Export(&data)
-	if err != nil {
-		return err
-	}
-
-	err = writeDataToFile(context.Target, exportData)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func KML(context *cli.Context) error {
-	data := getData(context)
-
-	var exporter Export
-	exporter = &modules.KML{}
 	exportData, err := exporter.Export(&data)
 	if err != nil {
 		return err

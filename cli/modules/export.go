@@ -30,13 +30,24 @@ func (r *ExportCmd) Run(ctx *cli.Context) error {
 }
 
 func (r *ExportCsvCmd) Run(ctx *cli.Context) error {
-	return export.CSV(r.Separator, ctx)
+	params := export.Parameters{
+		Separator: r.Separator,
+	}
+
+	return export.DoExport(export.CSV, params, ctx)
 }
 
 func (r *ExportJsonCmd) Run(ctx *cli.Context) error {
-	return export.JSON(ctx)
+	params := export.Parameters{}
+
+	return export.DoExport(export.JSON, params, ctx)
 }
 
 func (r *ExportKmlCmd) Run(ctx *cli.Context) error {
-	return export.KML(ctx)
+	params := export.Parameters{
+		CenterGeoLocationLatitude:  r.CenterGeoLocationLatitude,
+		CenterGeoLocationLongitude: r.CenterGeoLocationLongitude,
+	}
+
+	return export.DoExport(export.KML, params, ctx)
 }
