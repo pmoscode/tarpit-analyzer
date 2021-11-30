@@ -24,26 +24,11 @@ func (r *KML) Export(data *[]schemas.Data) (*[]string, error) {
 		locations = append(locations, *location)
 	}
 
-	locations = r.uniqueNonEmptyElementsOf(&locations)
+	locations = uniqueNonEmptyElementsOf(&locations)
 
 	r.generateKMLContent(&result, &locations)
 
 	return &result, nil
-}
-
-func (r *KML) uniqueNonEmptyElementsOf(items *[]structs.GeoLocationItem) []structs.GeoLocationItem {
-	unique := make(map[string]bool, len(*items))
-	us := make([]structs.GeoLocationItem, len(unique))
-	for _, elem := range *items {
-		if len(elem.Ip) != 0 {
-			if !unique[elem.Ip] {
-				us = append(us, elem)
-				unique[elem.Ip] = true
-			}
-		}
-	}
-
-	return us
 }
 
 func (r *KML) generateKMLContent(result *[]string, data *[]structs.GeoLocationItem) {

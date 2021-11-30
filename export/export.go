@@ -4,6 +4,8 @@ import (
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database/schemas"
 	"endlessh-analyzer/export/modules"
+	"log"
+	"strconv"
 )
 
 var debug = false
@@ -24,6 +26,7 @@ const (
 	CSV Type = iota
 	JSON
 	KML
+	GEOJSON
 )
 
 func DoExport(exportType Type, parameters Parameters, context *cli.Context) error {
@@ -39,6 +42,19 @@ func DoExport(exportType Type, parameters Parameters, context *cli.Context) erro
 		exporter = &modules.KML{
 			CenterGeoLocationLongitude: parameters.CenterGeoLocationLongitude,
 			CenterGeoLocationLatitude:  parameters.CenterGeoLocationLatitude,
+			Debug:                      context.Debug,
+		}
+	case GEOJSON:
+		lon, errLon := strconv.ParseFloat(parameters.CenterGeoLocationLongitude, 64)
+		lat, errLat := strconv.ParseFloat(parameters.CenterGeoLocationLatitude, 64)
+
+		if errLon != nil || errLat != nil {
+			log.Fatalln("CenterGeoLocation parameter must be a valid number")
+		}
+
+		exporter = &modules.GEOJSON{
+			CenterGeoLocationLongitude: lon,
+			CenterGeoLocationLatitude:  lat,
 			Debug:                      context.Debug,
 		}
 	}
