@@ -24,8 +24,9 @@ type ExportKmlCmd struct {
 }
 
 type ExportGeoJsonCmd struct {
-	CenterGeoLocationLatitude  string `default:"50.840886980084086" help:"Latitude you wish to be the target on the map. Default: Germany"`
-	CenterGeoLocationLongitude string `default:"10.276290870120306" help:"Longitude you wish to be the target on the map. Default: Germany"`
+	Type                       string `default:"point" enum:"line,point" help:"'line': Creates line from attacker source to CenterGeoLocation. ## 'point': Places point on attacker country with sum of attacks (prefer for large amount of data)"`
+	CenterGeoLocationLatitude  string `default:"50.840886980084086" help:"Latitude you wish to be the target on the map (for 'line' type). Default: Germany"`
+	CenterGeoLocationLongitude string `default:"10.276290870120306" help:"Longitude you wish to be the target on the map (for 'line' type). Default: Germany"`
 }
 
 func (r *ExportCsvCmd) Run(ctx *cli.Context) error {
