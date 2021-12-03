@@ -1,4 +1,4 @@
-package export
+package helper
 
 import (
 	"bufio"
@@ -11,43 +11,28 @@ import (
 	time2 "time"
 )
 
-func getData(context *cli.Context) []schemas.Data {
-	// Get Data DB connection
+func PrepareDatabase(context *cli.Context) *database.Database {
 	db := createDB(context)
-
-	// Setup Debug logger (or not)
 	setupLogger(context)
 
-	// Get start and end date from CLI params
+	return db
+}
+
+func PrepareTimeBounds(context *cli.Context) (*time2.Time, *time2.Time) {
 	start := helper.GetDate(context.StartDate)
 	end := helper.GetDate(context.EndDate)
 
-	// Query data
-	data := queryDB(start, end, db)
-
-	return data
+	return start, end
 }
 
 func setupLogger(context *cli.Context) {
-	debug = context.Debug
-	if debug {
+	if context.Debug {
 		log.SetLevel(log.DebugLevel)
 	}
 }
 
-func queryDB(start *time2.Time, end *time2.Time, db database.DbData) []schemas.Data {
-	queryParameters := database.QueryParameters{
-		StartDate: start,
-		EndDate:   end,
-	}
-	data, _ := db.ExecuteQueryGetList(queryParameters)
-
-	return data
-}
-
-func createDB(context *cli.Context) database.DbData {
-	// Load data with parameters
-	db, errCreate := database.CreateDbData(context.Debug)
+func createDB(context *cli.Context) *database.Database {
+	db, errCreate := database.CreateGenericDatabase(context.Debug)
 	if errCreate != nil {
 		log.Panicln("Data database could not be loaded.", errCreate)
 	}
@@ -55,7 +40,20 @@ func createDB(context *cli.Context) database.DbData {
 	return db
 }
 
-func writeDataToFile(path string, exportData *[]string) error {
+func QueryDataDB(db *database.Database, start *time2.Time, end *time2.Time) *[]schemas.Data {
+	queryParameters := database.QueryParameters{
+		StartDate: start,
+		EndDate:   end,
+	}
+
+	data := make([]schemas.Data, 0)
+
+	_ = db.ExecuteQueryGetList(&schemas.Data{}, &data, queryParameters)
+
+	return &data
+}
+
+func WriteDataToFile(path string, exportData *[]string) error {
 	file, err := os.Create(path)
 	if err != nil {
 		log.Errorln(err)

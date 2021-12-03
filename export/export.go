@@ -2,22 +2,23 @@ package export
 
 import (
 	"endlessh-analyzer/cli"
-	"endlessh-analyzer/database/schemas"
+	"endlessh-analyzer/database"
+	"endlessh-analyzer/export/helper"
 	"endlessh-analyzer/export/modules"
 	"log"
 	"strconv"
+	time2 "time"
 )
-
-var debug = false
 
 type Parameters struct {
 	Separator                  string
 	CenterGeoLocationLatitude  string
 	CenterGeoLocationLongitude string
+	Type                       string
 }
 
 type Export interface {
-	Export(data *[]schemas.Data) (*[]string, error)
+	Export(database *database.Database, start *time2.Time, end *time2.Time) (*[]string, error)
 }
 
 type Type int
@@ -30,8 +31,6 @@ const (
 )
 
 func DoExport(exportType Type, parameters Parameters, context *cli.Context) error {
-	data := getData(context)
-
 	var exporter Export
 	switch exportType {
 	case CSV:
@@ -59,12 +58,15 @@ func DoExport(exportType Type, parameters Parameters, context *cli.Context) erro
 		}
 	}
 
-	exportData, err := exporter.Export(&data)
+	data := helper.PrepareDatabase(context)
+	start, end := helper.PrepareTimeBounds(context)
+
+	exportData, err := exporter.Export(data, start, end)
 	if err != nil {
 		return err
 	}
 
-	err = writeDataToFile(context.Target, exportData)
+	err = helper.WriteDataToFile(context.Target, exportData)
 	if err != nil {
 		return err
 	}

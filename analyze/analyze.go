@@ -63,7 +63,7 @@ func DoAnalyze(context *cli.Context) error {
 	count, _ := db.ExecuteQueryGetAggregator(getQueryParametersCountAll(start, end))
 	sum, _ := db.ExecuteQueryGetAggregator(getQueryParametersSumAll(start, end))
 	longest, _ := db.ExecuteQueryGetFirst(getQueryParametersLongestDuration(start, end))
-	rowsTop, errQuery := db.DbRawQuery(Chart{}, getRawTopCountriesAttacks(start, end))
+	rowsTop, errQuery := db.DbRawQuery(getRawTopCountriesAttacks(start, end))
 	if errQuery != nil {
 		return errQuery
 	}

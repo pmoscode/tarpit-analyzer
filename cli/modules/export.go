@@ -56,6 +56,7 @@ func (r *ExportGeoJsonCmd) Run(ctx *cli.Context) error {
 	params := export.Parameters{
 		CenterGeoLocationLatitude:  r.CenterGeoLocationLatitude,
 		CenterGeoLocationLongitude: r.CenterGeoLocationLongitude,
+		Type:                       r.Type,
 	}
 
 	return export.DoExport(export.GEOJSON, params, ctx)

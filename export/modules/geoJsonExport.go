@@ -4,8 +4,9 @@ import (
 	"endlessh-analyzer/api"
 	"endlessh-analyzer/api/structs"
 	cachedb "endlessh-analyzer/cache"
-	"endlessh-analyzer/database/schemas"
+	"endlessh-analyzer/database"
 	geojson "github.com/paulmach/go.geojson"
+	time2 "time"
 )
 
 type GEOJSON struct {
@@ -14,17 +15,15 @@ type GEOJSON struct {
 	Debug                      bool
 }
 
-func (r *GEOJSON) Export(data *[]schemas.Data) (*[]string, error) {
+func (r *GEOJSON) Export(database *database.Database, start *time2.Time, end *time2.Time) (*[]string, error) {
 	cachedb.Init(api.IpApiCom, r.Debug)
 	result := make([]string, 0)
 
 	locations := make([]structs.GeoLocationItem, 0)
-	for _, dataItem := range *data {
-		location := cachedb.GetLocationFor(dataItem.Ip)
-		locations = append(locations, *location)
-	}
-
-	locations = uniqueNonEmptyElementsOf(&locations)
+	//for _, dataItem := range *data {
+	//	location := cachedb.GetLocationFor(dataItem.Ip)
+	//	locations = append(locations, *location)
+	//}
 
 	featureCollection := geojson.NewFeatureCollection()
 

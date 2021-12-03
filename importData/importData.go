@@ -6,7 +6,6 @@ import (
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database"
-	"endlessh-analyzer/database/schemas"
 	"endlessh-analyzer/helper"
 	"endlessh-analyzer/importData/modules"
 	"endlessh-analyzer/importData/structs"
@@ -81,7 +80,7 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 	}
 
 	cachedb.Init(api.IpApiCom, context.Debug)
-	rows, errQuery := db.DbRawQuery(schemas.Location{}, getQueryParametersUnlocalizedIps())
+	rows, errQuery := db.DbRawQuery(getQueryParametersUnlocalizedIps())
 	if errQuery != nil {
 		return errQuery
 	}

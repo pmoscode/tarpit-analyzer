@@ -3,12 +3,11 @@ package database
 import (
 	geolocation "endlessh-analyzer/api/structs"
 	"endlessh-analyzer/database/schemas"
-	log "github.com/sirupsen/logrus"
 	"strings"
 )
 
 type DbCache struct {
-	database
+	Database
 }
 
 func (r *DbCache) GetLocation(ip string) (schemas.Location, DbResult) {
@@ -121,12 +120,6 @@ func (r *DbCache) Map(vs []geolocation.GeoLocationItem, f func(location geolocat
 func CreateDbCache(debug bool) (DbCache, error) {
 	db := DbCache{}
 	db.initDatabase("data", debug)
-
-	err := db.db.AutoMigrate(&schemas.Location{})
-	if err != nil {
-		log.Errorln(err)
-		return DbCache{}, err
-	}
 
 	return db, nil
 }

@@ -1,17 +1,21 @@
 package modules
 
 import (
+	"endlessh-analyzer/database"
 	"endlessh-analyzer/database/schemas"
+	"endlessh-analyzer/export/helper"
 	"strconv"
 	"strings"
-	"time"
+	time2 "time"
 )
 
 type CSV struct {
 	Separator string
 }
 
-func (r *CSV) Export(data *[]schemas.Data) (*[]string, error) {
+func (r *CSV) Export(database *database.Database, start *time2.Time, end *time2.Time) (*[]string, error) {
+	data := helper.QueryDataDB(database, start, end)
+
 	result := make([]string, len(*data))
 
 	for idx, dataItem := range *data {
@@ -21,10 +25,10 @@ func (r *CSV) Export(data *[]schemas.Data) (*[]string, error) {
 	return &result, nil
 }
 
-func (r CSV) mapToCSV(data schemas.Data) []string {
+func (r *CSV) mapToCSV(data schemas.Data) []string {
 	return []string{
-		data.Begin.Format(time.RFC3339),
-		data.End.Format(time.RFC3339),
+		data.Begin.Format(time2.RFC3339),
+		data.End.Format(time2.RFC3339),
 		data.Ip,
 		strconv.FormatFloat(float64(data.Duration), 'f', -1, 32),
 	}

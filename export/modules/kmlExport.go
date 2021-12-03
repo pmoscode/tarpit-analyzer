@@ -1,11 +1,11 @@
 package modules
 
 import (
-	"endlessh-analyzer/api"
-	"endlessh-analyzer/api/structs"
-	cachedb "endlessh-analyzer/cache"
+	"endlessh-analyzer/database"
 	"endlessh-analyzer/database/schemas"
+	"endlessh-analyzer/helper"
 	"fmt"
+	time2 "time"
 )
 
 type KML struct {
@@ -14,24 +14,44 @@ type KML struct {
 	Debug                      bool
 }
 
-func (r *KML) Export(data *[]schemas.Data) (*[]string, error) {
-	cachedb.Init(api.IpApiCom, r.Debug)
-	result := make([]string, 0)
+type KmlDbItem struct {
+	Country   string
+	Latitude  float64
+	Longitude float64
+}
 
-	locations := make([]structs.GeoLocationItem, 0)
-	for _, dataItem := range *data {
-		location := cachedb.GetLocationFor(dataItem.Ip)
-		locations = append(locations, *location)
+func (r *KML) Export(db *database.Database, start *time2.Time, end *time2.Time) (*[]string, error) {
+	//query := "SELECT DISTINCT l.country, l.latitude, l.longitude FROM locations l JOIN data d on d.ip = l.ip where l.status == 'success' AND d.begin >= ? AND d.end <= ?"
+	whereQueries := make([]database.WhereQuery, 0)
+	whereQueries = append(whereQueries, database.WhereQuery{Query: "l.status == ?", Parameters: "success"})
+	if start != nil {
+		whereQueries = append(whereQueries, database.WhereQuery{Query: "d.begin >= ?", Parameters: start})
+	}
+	if end != nil {
+		whereQueries = append(whereQueries, database.WhereQuery{Query: "d.end <= ?", Parameters: end})
+	}
+	parameter := database.QueryParameters{
+		SelectQuery: helper.String("l.country, l.latitude, l.longitude"),
+		Distinct:    true,
+		JoinQuery:   helper.String("JOIN locations l on data.ip = l.ip"),
+		WhereQuery:  &whereQueries,
 	}
 
-	locations = uniqueNonEmptyElementsOf(&locations)
+	//rows, err := db.DbRawQuery(query, start, end)
+	//if err != nil {
+	//	return nil, err
+	//}
 
-	r.generateKMLContent(&result, &locations)
+	result := make([]string, 0)
+	kmlDbItems := make([]KmlDbItem, 0)
+	db.ExecuteQueryGetList(schemas.Data{}, &kmlDbItems, parameter)
+
+	r.generateKMLContent(&result, &kmlDbItems)
 
 	return &result, nil
 }
 
-func (r *KML) generateKMLContent(result *[]string, data *[]structs.GeoLocationItem) {
+func (r *KML) generateKMLContent(result *[]string, data *[]KmlDbItem) {
 	*result = append(*result, `<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://www.opengis.net/kml/2.2">
 	<Document>
@@ -42,22 +62,20 @@ func (r *KML) generateKMLContent(result *[]string, data *[]structs.GeoLocationIt
 			</LineStyle>
 		</Style>`)
 
-	for _, items := range *data {
-		if items.Status == "success" {
-			*result = append(*result, `
+	for _, item := range *data {
+		*result = append(*result, `
 		<Placemark>
-			<name>`+items.Country+`</name>
+			<name>`+item.Country+`</name>
 			<extrude>1</extrude>
 			<tessellate>1</tessellate>
 			<styleUrl>#transBluePoly</styleUrl>
 			<LineString>
 				<coordinates>
-					`+fmt.Sprintf("%f", items.Longitude)+`, `+fmt.Sprintf("%f", items.Latitude)+`
+					`+fmt.Sprintf("%f", item.Longitude)+`, `+fmt.Sprintf("%f", item.Latitude)+`
 					`+r.CenterGeoLocationLongitude+`,`+r.CenterGeoLocationLatitude+`
 				</coordinates>
 			</LineString>
 		</Placemark>`)
-		}
 	}
 
 	*result = append(*result, `
