@@ -37,11 +37,6 @@ func (r *KML) Export(db *database.Database, start *time2.Time, end *time2.Time) 
 		WhereQuery:  &whereQueries,
 	}
 
-	//rows, err := db.DbRawQuery(query, start, end)
-	//if err != nil {
-	//	return nil, err
-	//}
-
 	result := make([]string, 0)
 	kmlDbItems := make([]KmlDbItem, 0)
 	db.ExecuteQueryGetList(schemas.Data{}, &kmlDbItems, parameter)
