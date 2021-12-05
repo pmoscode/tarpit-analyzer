@@ -58,6 +58,7 @@ var countryGeoLocationDataSource = [][]string{
 	{"CR", "9.748917", "-83.753428", "Costa Rica"},
 	{"CU", "21.521757", "-77.781167", "Cuba"},
 	{"CV", "16.002082", "-24.013197", "Cape Verde"},
+	{"CW", "12.141670", "-68.905122", "Curacao"},
 	{"CX", "-10.447525", "105.690449", "Christmas Island"},
 	{"CY", "35.126413", "33.429859", "Cyprus"},
 	{"CZ", "49.817492", "15.472962", "Czech Republic"},
