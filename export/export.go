@@ -55,6 +55,7 @@ func DoExport(exportType Type, parameters Parameters, context *cli.Context) erro
 			CenterGeoLocationLongitude: lon,
 			CenterGeoLocationLatitude:  lat,
 			Debug:                      context.Debug,
+			Type:                       parameters.Type,
 		}
 	}
 

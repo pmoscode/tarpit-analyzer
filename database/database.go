@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"endlessh-analyzer/database/countryGeoLocationData"
 	"endlessh-analyzer/database/schemas"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
@@ -27,6 +28,7 @@ type QueryParameters struct {
 	SelectQuery *string
 	WhereQuery  *[]WhereQuery
 	JoinQuery   *string
+	GroupBy     *string
 	OrderBy     *string
 	Limit       *int
 }
@@ -66,13 +68,15 @@ func (r *Database) initDatabase(dbFilename string, debug bool) {
 		panic("failed to connect database")
 	}
 
-	err = db.AutoMigrate(&schemas.Location{}, &schemas.Data{})
+	err = db.AutoMigrate(&schemas.Location{}, &schemas.Data{}, &schemas.CountryGeoLocation{})
 	if err != nil {
 		logrus.Errorln(err)
 		panic("Could not migrate schema for 'Location' / 'Data'")
 	}
 
 	r.db = db
+
+	r.initCountryCodes()
 }
 
 func (r *Database) DbRawQuery(query string, parameters ...interface{}) (*sql.Rows, error) {
@@ -106,6 +110,11 @@ func (r *Database) ScanToStruct(rows *sql.Rows, model interface{}) error {
 func (r *Database) ExecuteQueryGetList(model interface{}, target interface{}, queryParameters QueryParameters) DbResult {
 	dbSub := r.internalQuery(model, queryParameters)
 	result := dbSub.Find(target)
+
+	if result.Error != nil {
+		logrus.Errorln(result.Error)
+		return DbError
+	}
 
 	if result.RowsAffected == 0 {
 		return DbRecordNotFound
@@ -162,11 +171,23 @@ func (r *Database) internalQuery(model interface{}, queryParameters QueryParamet
 			dbSub = dbSub.Scopes(r.whereQuery(item))
 		}
 	}
+	if queryParameters.GroupBy != nil {
+		dbSub = dbSub.Group(*queryParameters.GroupBy)
+	}
 	if queryParameters.OrderBy != nil {
 		dbSub = dbSub.Order(*queryParameters.OrderBy)
 	}
 
 	return dbSub
+}
+
+func (r *Database) initCountryCodes() {
+	test := schemas.CountryGeoLocation{}
+	result := r.db.Model(schemas.CountryGeoLocation{}).First(&test)
+	if result.RowsAffected == 0 {
+		countryGeoLocationData.BuildCountryGeoLocationData()
+		r.db.Model(schemas.CountryGeoLocation{}).CreateInBatches(countryGeoLocationData.CountryGeoLocationData, 50)
+	}
 }
 
 func CreateGenericDatabase(debug bool) (*Database, error) {

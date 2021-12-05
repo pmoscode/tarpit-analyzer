@@ -21,7 +21,6 @@ type KmlDbItem struct {
 }
 
 func (r *KML) Export(db *database.Database, start *time2.Time, end *time2.Time) (*[]string, error) {
-	//query := "SELECT DISTINCT l.country, l.latitude, l.longitude FROM locations l JOIN data d on d.ip = l.ip where l.status == 'success' AND d.begin >= ? AND d.end <= ?"
 	whereQueries := make([]database.WhereQuery, 0)
 	whereQueries = append(whereQueries, database.WhereQuery{Query: "l.status == ?", Parameters: "success"})
 	if start != nil {
@@ -39,6 +38,7 @@ func (r *KML) Export(db *database.Database, start *time2.Time, end *time2.Time) 
 
 	result := make([]string, 0)
 	kmlDbItems := make([]KmlDbItem, 0)
+
 	db.ExecuteQueryGetList(schemas.Data{}, &kmlDbItems, parameter)
 
 	r.generateKMLContent(&result, &kmlDbItems)
