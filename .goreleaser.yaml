@@ -1,8 +1,18 @@
 project_name: tarpit-analyzer
 builds:
-  - env: [CGO_ENABLED=1]
+  - id: linux-amd64
+    env:
+      - CC=aarch64-linux-gnu-gcc
+      - CXX=aarch64-linux-gnu-g++
     goos:
       - linux
+    goarch:
+      - amd64
+  - id: windows-amd64
+    env:
+      - CC=x86_64-w64-mingw32-gcc
+      - CXX=x86_64-w64-mingw32-g++
+    goos:
       - windows
     goarch:
       - amd64

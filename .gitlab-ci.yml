@@ -26,9 +26,10 @@ release:
 
   script: |
     docker run --rm --privileged \
-      -v $PWD:/go/src/gitlab.com/goreleaser/example \
-      -w /go/src/gitlab.com/goreleaser/example \
+      -v $PWD:/go/src/gitlab.com/pmoscode/tarpit-analyzer \
+      -w /go/src/gitlab.com/pmoscode/tarpit-analyzer \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e DOCKER_USERNAME -e DOCKER_PASSWORD -e DOCKER_REGISTRY  \
       -e GITLAB_TOKEN \
-      goreleaser/goreleaser release --rm-dist
+      -e CGO_ENABLED=1 \
+      troian/golang-cross:v1.16.7 release --rm-dist
