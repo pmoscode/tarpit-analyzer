@@ -1,44 +1,37 @@
 
-![Logo](https://dev-to-uploads.s3.amazonaws.com/uploads/articles/th5xamgrr6se0x5ro4g6.png)
+![Logo](banner.png)
 
 
-## Badges
-
-Add badges from somewhere like: [shields.io](https://shields.io/)
-
-[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/)
-
+[![GPLv3 License](https://img.shields.io/badge/License-GPL%20v3-yellow.svg)](https://opensource.org/licenses/GPL-3.0)
 
 # Tarpit Analyzer
 
-A brief description of what this project does and who it's for
+If you have an ssh tarpit service running on you own, and you want somehow to analyze the logged data...
 
-Endlessh: https://github.com/skeeto/endlessh
+With Tarpit Analyzer you can dig into the data and do some analysis and generate visual outputs which you can then import in Google Maps or Openstreetmap.
 
-Python Ssh-tarpit: https://pypi.org/project/ssh-tarpit/
+Currently, supported tarpits:
+
+- Endlessh: https://github.com/skeeto/endlessh
+- Python Ssh-tarpit: https://pypi.org/project/ssh-tarpit/
 
 ## Features
 
+- Kong cli parser: https://github.com/alecthomas/kong
 - Progressbar: https://github.com/schollz/progressbar
 - Duration format: https://golangexample.com/better-time-duration-formatting-in-go/
 
 
 ## Installation
 
-Install my-project with npm
-
-```bash
-  npm install my-project
-  cd my-project
-```
+Download binary from https://gitlab.com/pmoscode/tarpit-analyzer/-/releases for your arch.
+Or clone this repository and build on your own.
     
 ## Usage/Examples
 
-```javascript
-import Component from 'my-project'
-
-function App() {
-  return <Component />
-}
+```shell
+./endlessh_analyzer import <path-to>/endlessh.log --type=endlessh # Import Enlessh logs
+./endlessh_analyzer analyze --target=analyze.txt # Generate analysis
+./endlessh_analyzer export json --start-date=2021-07-16 --end-date=2021-07-18 --target=export.json # # Exports for a given data range to json format
 ```
 
