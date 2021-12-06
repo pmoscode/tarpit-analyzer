@@ -1,4 +1,4 @@
-project_name: Tarpit Analyzer
+project_name: Tarpit-Analyzer
 builds:
   - env: [CGO_ENABLED=0]
     goos:
