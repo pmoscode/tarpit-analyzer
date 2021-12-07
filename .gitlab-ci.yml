@@ -32,4 +32,4 @@ release:
       -e DOCKER_USERNAME -e DOCKER_PASSWORD -e DOCKER_REGISTRY  \
       -e GITLAB_TOKEN \
       -e CGO_ENABLED=1 \
-      troian/golang-cross:v1.17.2-base release --rm-dist
+      ghcr.io/troian/golang-cross:v1.17.4 release --rm-dist
