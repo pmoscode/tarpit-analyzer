@@ -80,7 +80,15 @@ func (r *Database) initDatabase(dbFilename string, debug bool) {
 }
 
 func (r *Database) DbRawQuery(query string, parameters ...interface{}) (*sql.Rows, error) {
-	rows, err := r.db.Raw(query, parameters).Rows()
+	var rows *sql.Rows
+	var err error
+
+	if parameters == nil {
+		rows, err = r.db.Raw(query).Rows()
+	} else {
+		rows, err = r.db.Raw(query, parameters).Rows()
+	}
+
 	if err != nil {
 		return nil, err
 	}
