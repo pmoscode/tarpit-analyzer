@@ -30,25 +30,19 @@ type PointDbItem struct {
 }
 
 func (r *GEOJSON) Export(db *database.Database, start *time2.Time, end *time2.Time) (*[]string, error) {
-	whereQueries := make([]database.WhereQuery, 0)
-	whereQueries = append(whereQueries, database.WhereQuery{Query: "l.status == ?", Parameters: "success"})
-	if start != nil {
-		whereQueries = append(whereQueries, database.WhereQuery{Query: "d.begin >= ?", Parameters: start})
-	}
-	if end != nil {
-		whereQueries = append(whereQueries, database.WhereQuery{Query: "d.end <= ?", Parameters: end})
-	}
+	whereQueries := make([]database.WhereQuery, 1)
+	whereQueries[0] = database.WhereQuery{Query: "l.status == ?", Parameters: "success"}
 
 	var lineData string
 	var err error
 	switch r.Type {
 	case "line":
-		lineData, err = r.generateLineData(db, whereQueries)
+		lineData, err = r.generateLineData(db, start, end, whereQueries)
 		if err != nil {
 			return nil, err
 		}
 	case "point":
-		lineData, err = r.generatePointData(db, whereQueries)
+		lineData, err = r.generatePointData(db, start, end, whereQueries)
 		if err != nil {
 			return nil, err
 		}
@@ -59,8 +53,10 @@ func (r *GEOJSON) Export(db *database.Database, start *time2.Time, end *time2.Ti
 	return &result, nil
 }
 
-func (r *GEOJSON) generateLineData(db *database.Database, whereQueries []database.WhereQuery) (string, error) {
+func (r *GEOJSON) generateLineData(db *database.Database, start *time2.Time, end *time2.Time, whereQueries []database.WhereQuery) (string, error) {
 	parameter := database.QueryParameters{
+		StartDate:   start,
+		EndDate:     end,
 		SelectQuery: helper.String("l.latitude, l.longitude"),
 		Distinct:    true,
 		JoinQuery:   helper.String("JOIN locations l on data.ip = l.ip"),
@@ -85,7 +81,7 @@ func (r *GEOJSON) generateLineData(db *database.Database, whereQueries []databas
 	return string(json), nil
 }
 
-func (r *GEOJSON) generatePointData(db *database.Database, whereQueries []database.WhereQuery) (string, error) {
+func (r *GEOJSON) generatePointData(db *database.Database, start *time2.Time, end *time2.Time, whereQueries []database.WhereQuery) (string, error) {
 
 	// SELECT DISTINCT l.country, l.country_code, c.latitude, c.longitude, count(d.id) as attacks
 	// FROM locations l JOIN data d on d.ip = l.ip LEFT JOIN country_geo_locations c ON l.country_code = c.country_code
@@ -94,6 +90,8 @@ func (r *GEOJSON) generatePointData(db *database.Database, whereQueries []databa
 	// ORDER BY attacks DESC
 
 	parameter := database.QueryParameters{
+		StartDate:   start,
+		EndDate:     end,
 		SelectQuery: helper.String("l.country, l.country_code, c.latitude, c.longitude, count(data.id) as attacks"),
 		Distinct:    true,
 		JoinQuery:   helper.String("JOIN locations l on data.ip = l.ip LEFT JOIN country_geo_locations c ON l.country_code = c.country_code"),
