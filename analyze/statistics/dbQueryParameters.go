@@ -1,4 +1,4 @@
-package analyze
+package statistics
 
 import (
 	"endlessh-analyzer/database"
