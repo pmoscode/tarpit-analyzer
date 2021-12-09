@@ -164,26 +164,37 @@ func (r *Database) whereQuery(queryParameter WhereQuery) func(db *gorm.DB) *gorm
 
 func (r *Database) internalQuery(model interface{}, queryParameters QueryParameters) *gorm.DB {
 	dbSub := r.db.Model(&model)
+
 	if queryParameters.SelectQuery != nil {
 		dbSub = dbSub.Select(*queryParameters.SelectQuery)
 	}
+
 	if queryParameters.Distinct {
 		dbSub = dbSub.Distinct()
 	}
+
 	dbSub = dbSub.Scopes(r.timeRange(queryParameters.StartDate, queryParameters.EndDate))
+
 	if queryParameters.JoinQuery != nil {
 		dbSub = dbSub.Joins(*queryParameters.JoinQuery)
 	}
+
 	if queryParameters.WhereQuery != nil && len(*queryParameters.WhereQuery) > 0 {
 		for _, item := range *queryParameters.WhereQuery {
 			dbSub = dbSub.Scopes(r.whereQuery(item))
 		}
 	}
+
 	if queryParameters.GroupBy != nil {
 		dbSub = dbSub.Group(*queryParameters.GroupBy)
 	}
+
 	if queryParameters.OrderBy != nil {
 		dbSub = dbSub.Order(*queryParameters.OrderBy)
+	}
+
+	if queryParameters.Limit != nil {
+		dbSub = dbSub.Limit(*queryParameters.Limit)
 	}
 
 	return dbSub

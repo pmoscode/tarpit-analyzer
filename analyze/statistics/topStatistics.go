@@ -3,6 +3,7 @@ package statistics
 import (
 	"database/sql"
 	"endlessh-analyzer/database"
+	"endlessh-analyzer/database/schemas"
 	"fmt"
 	"github.com/hako/durafmt"
 	"github.com/olekukonko/tablewriter"
@@ -15,7 +16,7 @@ import (
 )
 
 func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, debug bool) (string, error) {
-	rowsTop, errQuery := db.DbRawQuery(getRawTopCountriesAttacks(start, end))
+	rowsTop, errQuery := db.DbQuery(schemas.Data{}, getRawTopCountriesAttacks(start, end))
 	if errQuery != nil {
 		return "", errQuery
 	}
@@ -42,8 +43,6 @@ func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, d
 
 	table := tablewriter.NewWriter(builder)
 	table.SetHeader([]string{"Rank", "Country", "Attacks", "Sum attack time", "Avg attack time"})
-	//table.SetColMinWidth(3, 40)
-	//table.SetColMinWidth(4, 40)
 	table.SetAutoWrapText(false)
 
 	p := message.NewPrinter(language.English)

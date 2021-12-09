@@ -30,29 +30,14 @@ func getQueryParametersLongestDuration(start *time2.Time, end *time2.Time) datab
 	}
 }
 
-func getRawTopCountriesAttacks(start *time2.Time, end *time2.Time) string {
-	whereStringStart := ""
-	if start != nil {
-		whereStringStart = "d.begin >= \"" + start.Format("2006-01-02") + "\" "
+func getRawTopCountriesAttacks(start *time2.Time, end *time2.Time) database.QueryParameters {
+	return database.QueryParameters{
+		StartDate:   start,
+		EndDate:     end,
+		SelectQuery: helper.String("l.country, count(data.id) as sum_attacks, CAST(sum(data.duration) as INT) as sum_time, CAST(round(avg(data.duration), 0) as INT) as avg_time"),
+		JoinQuery:   helper.String("JOIN locations l ON data.ip = l.ip"),
+		GroupBy:     helper.String("l.country"),
+		OrderBy:     helper.String("sum_attacks desc"),
+		Limit:       helper.Int(5),
 	}
-
-	whereStringEnd := ""
-	if end != nil {
-		if whereStringStart != "" {
-			whereStringEnd = " and "
-		}
-		whereStringEnd = whereStringEnd + "d.end <= \"" + end.Format("2006-01-02") + "\" "
-	}
-
-	whereString := ""
-	if whereStringStart != "" || whereStringEnd != "" {
-		whereString = "WHERE " + whereStringStart + whereStringEnd + " "
-	}
-
-	return "SELECT l.country, count(d.id) as sum_attacks, CAST(sum(d.duration) as INT) as sum_time, CAST(round(avg(d.duration), 0) as INT) as avg_time " +
-		"from data d JOIN locations l ON d.ip = l.ip " +
-		whereString +
-		"GROUP BY l.country " +
-		"ORDER BY sum_attacks DESC " +
-		"LIMIT 5"
 }

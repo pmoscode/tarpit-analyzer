@@ -42,7 +42,6 @@ func GetHeadStatistics(db *database.DbData, start *time2.Time, end *time2.Time, 
 
 	p := message.NewPrinter(language.English)
 
-	print(p.Sprint(strconv.Itoa(resultTarpitted)))
 	data := [][]string{
 		{"Attacks count:", p.Sprint(strconv.Itoa(resultTarpitted))},
 		{"Attacks sum:", timeSumFormat.String()},
