@@ -59,5 +59,5 @@ func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, d
 
 	table.Render()
 
-	return builder.String(), nil
+	return "  TOP 5 ATTACKER COUNTRY STATISTICS\n" + builder.String(), nil
 }

@@ -33,6 +33,7 @@ func DoAnalyze(context *cli.Context) error {
 
 	headStat := statistics.GetHeadStatistics(&db, start, end, context.Debug)
 	targetFileWriter.writeText(headStat)
+	targetFileWriter.writeText("")
 
 	topStat, errTopStat := statistics.GetTopStatistics(&db, start, end, context.Debug)
 	if errTopStat != nil {

@@ -43,28 +43,20 @@ func GetHeadStatistics(db *database.DbData, start *time2.Time, end *time2.Time, 
 	p := message.NewPrinter(language.English)
 
 	data := [][]string{
-		{"Attacks count:", p.Sprint(strconv.Itoa(resultTarpitted))},
-		{"Attacks sum:", timeSumFormat.String()},
-		{"Attacks Avg:", timeAvgFormat.String()},
-		{"Attack max from:", resultLongestIp + " => " + timeLongestFormat.String()},
+		{"Count", p.Sprint(strconv.Itoa(resultTarpitted))},
+		{"Time Sum", timeSumFormat.String()},
+		{"Time Avg", timeAvgFormat.String()},
+		{"IP max time", resultLongestIp + " => " + timeLongestFormat.String()},
 	}
 
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
+	table.SetHeader([]string{"Attack", ""})
 	table.SetAutoWrapText(false)
-	table.SetAutoFormatHeaders(true)
-	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
 	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.SetCenterSeparator("")
-	table.SetColumnSeparator("")
-	table.SetRowSeparator("")
-	table.SetHeaderLine(false)
-	table.SetBorder(false)
-	table.SetTablePadding("\t") // pad with tabs
-	table.SetNoWhiteSpace(true)
-	table.AppendBulk(data) // Add Bulk Data
+	table.AppendBulk(data)
 	table.Render()
 
-	return builder.String()
+	return "  GLOBAL STATISTICS\n" + builder.String()
 }
