@@ -28,12 +28,10 @@ func DoAnalyze(context *cli.Context) error {
 	}
 
 	targetFileWriter.writeText("\tTarpit Analyzer Statistics")
-	targetFileWriter.writeText("==================================")
-	targetFileWriter.writeText("")
+	targetFileWriter.writeTextWithBottomPadding("==================================", 1)
 
 	headStat := statistics.GetHeadStatistics(&db, start, end, context.Debug)
-	targetFileWriter.writeText(headStat)
-	targetFileWriter.writeText("")
+	targetFileWriter.writeTextWithBottomPadding(headStat, 1)
 
 	topStat, errTopStat := statistics.GetTopStatistics(&db, start, end, context.Debug)
 	if errTopStat != nil {

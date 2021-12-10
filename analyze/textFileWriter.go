@@ -4,6 +4,7 @@ import (
 	"bufio"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"strings"
 )
 
 type textFileWriter struct {
@@ -41,4 +42,8 @@ func (r *textFileWriter) close() error {
 
 func (r *textFileWriter) writeText(text string) {
 	_, _ = r.stringBuffer.WriteString(text + "\n")
+}
+
+func (r *textFileWriter) writeTextWithBottomPadding(text string, padding int) {
+	r.writeText(text + strings.Repeat("\n", padding))
 }
