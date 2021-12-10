@@ -6,6 +6,7 @@ import (
 	"endlessh-analyzer/database"
 	"endlessh-analyzer/helper"
 	log "github.com/sirupsen/logrus"
+	time2 "time"
 )
 
 func DoAnalyze(context *cli.Context) error {
@@ -29,6 +30,12 @@ func DoAnalyze(context *cli.Context) error {
 
 	targetFileWriter.writeText("\tTarpit Analyzer Statistics")
 	targetFileWriter.writeTextWithBottomPadding("==================================", 1)
+	header := addDateHeader(start, end)
+	if header != "" {
+		targetFileWriter.writeTextWithBottomPadding("Selected date range: "+header, 2)
+	} else {
+		targetFileWriter.writeTextWithBottomPadding("Selected date range: All data", 2)
+	}
 
 	headStat := statistics.GetHeadStatistics(&db, start, end, context.Debug)
 	targetFileWriter.writeTextWithBottomPadding(headStat, 1)
@@ -37,7 +44,25 @@ func DoAnalyze(context *cli.Context) error {
 	if errTopStat != nil {
 		return errTopStat
 	}
-	targetFileWriter.writeText(topStat)
+	targetFileWriter.writeTextWithBottomPadding(topStat, 1)
+
+	weekdayStat, errWeekdayStat := statistics.GetAttackTimeStatistics(&db, start, end, statistics.DAY)
+	if errWeekdayStat != nil {
+		return errWeekdayStat
+	}
+	targetFileWriter.writeTextWithBottomPadding(weekdayStat, 1)
+
+	monthStat, errMonthStat := statistics.GetAttackTimeStatistics(&db, start, end, statistics.MONTH)
+	if errMonthStat != nil {
+		return errMonthStat
+	}
+	targetFileWriter.writeTextWithBottomPadding(monthStat, 1)
+
+	yearStat, errYearStat := statistics.GetAttackTimeStatistics(&db, start, end, statistics.YEAR)
+	if errYearStat != nil {
+		return errYearStat
+	}
+	targetFileWriter.writeTextWithBottomPadding(yearStat, 1)
 
 	errClose := targetFileWriter.close()
 	if errClose != nil {
@@ -45,4 +70,21 @@ func DoAnalyze(context *cli.Context) error {
 	}
 
 	return nil
+}
+
+func addDateHeader(start *time2.Time, end *time2.Time) string {
+	header := ""
+
+	if start != nil {
+		header = start.Format("2006-01-02")
+	}
+
+	if end != nil {
+		if header != "" {
+			header += " - "
+		}
+		header += end.Format("2006-01-02")
+	}
+
+	return header
 }

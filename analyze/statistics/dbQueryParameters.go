@@ -30,7 +30,7 @@ func getQueryParametersLongestDuration(start *time2.Time, end *time2.Time) datab
 	}
 }
 
-func getRawTopCountriesAttacks(start *time2.Time, end *time2.Time) database.QueryParameters {
+func getQueryParametersTopCountriesAttacks(start *time2.Time, end *time2.Time) database.QueryParameters {
 	return database.QueryParameters{
 		StartDate:   start,
 		EndDate:     end,
@@ -39,5 +39,19 @@ func getRawTopCountriesAttacks(start *time2.Time, end *time2.Time) database.Quer
 		GroupBy:     helper.String("l.country"),
 		OrderBy:     helper.String("sum_attacks desc"),
 		Limit:       helper.Int(5),
+	}
+}
+
+func getQueryParametersDateAttacks(start *time2.Time, end *time2.Time, mode TimeStatistic) database.QueryParameters {
+	return database.QueryParameters{
+		StartDate:   start,
+		EndDate:     end,
+		SelectQuery: helper.String("strftime('" + mode.format + "', begin) as mode_str, count(id) as attacks"),
+		WhereQuery: &[]database.WhereQuery{{
+			Query:      "success = ?",
+			Parameters: 1,
+		}},
+		GroupBy: helper.String("mode_str"),
+		OrderBy: helper.String("attacks DESC"),
 	}
 }

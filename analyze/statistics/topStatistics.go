@@ -16,7 +16,7 @@ import (
 )
 
 func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, debug bool) (string, error) {
-	rowsTop, errQuery := db.DbQuery(schemas.Data{}, getRawTopCountriesAttacks(start, end))
+	rowsTop, errQuery := db.DbQuery(schemas.Data{}, getQueryParametersTopCountriesAttacks(start, end))
 	if errQuery != nil {
 		return "", errQuery
 	}
