@@ -27,8 +27,8 @@ type IpApiComItem struct {
 	Query         string  `json:"query"`
 }
 
-func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, error) {
-	body := "[\"" + strings.Join(ips, "\",\"") + "\"]"
+func (r IpApiCom) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem, error) {
+	body := "[\"" + strings.Join(*ips, "\",\"") + "\"]"
 
 	resp, err := http.Post("http://ip-api.com/batch?fields=status,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,query", "application/json", bytes.NewBufferString(body))
 	if err != nil {
@@ -43,7 +43,7 @@ func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, 
 			log.Errorln(err)
 		}
 
-		mappedLocations, err := mapToGeoLocationItem(&ipLocation)
+		mappedLocations, err := r.mapToGeoLocationItem(&ipLocation)
 		if err != nil {
 			return nil, err
 		}
@@ -62,7 +62,7 @@ func (c IpApiCom) QueryGeoLocationAPI(ips []string) ([]structs.GeoLocationItem, 
 	return nil, errors.New("got response from api: " + resp.Status)
 }
 
-func mapToGeoLocationItem(items *[]IpApiComItem) ([]structs.GeoLocationItem, error) {
+func (r *IpApiCom) mapToGeoLocationItem(items *[]IpApiComItem) ([]structs.GeoLocationItem, error) {
 	count := len(*items)
 	locations := make([]structs.GeoLocationItem, count)
 

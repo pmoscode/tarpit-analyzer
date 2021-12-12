@@ -48,7 +48,7 @@ func GetLocationFor(ip string) *geolocation.GeoLocationItem {
 
 	geolocationApi := api.CreateGeoLocationAPI(geolocationApi)
 	ipBatch := []string{ip}
-	resolved, errApi := geolocationApi.QueryGeoLocationAPI(ipBatch)
+	resolved, errApi := geolocationApi.QueryGeoLocationAPI(&ipBatch)
 
 	if errApi != nil {
 		log.Errorln("Geolocation Api error: ", errApi)
@@ -85,7 +85,7 @@ func ResoleLocationsFor(ips []string, batchSize int) int {
 	}
 	bar.Finish()
 
-	geolocationApi := api.CreateGeoLocationAPI(api.IpApiCom)
+	geolocationApi := api.CreateGeoLocationAPI(geolocationApi)
 	batchCount := len(batch)
 	if batchCount > 0 {
 		bar = progressbar.Default(int64(batchCount), "Processing IP's...")
@@ -96,7 +96,7 @@ func ResoleLocationsFor(ips []string, batchSize int) int {
 			}
 
 			ipBatch := batch[i : i+batchSize]
-			resolved, errApi := geolocationApi.QueryGeoLocationAPI(ipBatch)
+			resolved, errApi := geolocationApi.QueryGeoLocationAPI(&ipBatch)
 
 			processedIps = processedIps + len(resolved)
 			bar.Add(len(resolved))
