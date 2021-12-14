@@ -113,6 +113,6 @@ func processIps(ips []string) {
 		return
 	}
 
-	processedIps := cachedb.ResoleLocationsFor(ips)
+	processedIps := cachedb.ResolveLocationsFor(ips)
 	log.Infoln("Processed IP's: ", processedIps)
 }

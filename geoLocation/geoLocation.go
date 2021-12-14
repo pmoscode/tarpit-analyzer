@@ -39,5 +39,5 @@ func (r *GeoLocation) ResolveLocations(ips []string) (*[]structs.GeoLocationItem
 }
 
 func CreateGeoLocation() *GeoLocation {
-	return &GeoLocation{apis: []QueryGeoLocationAPI{&endpoints.IpApiCom{}, &endpoints.ReallyFreeGeoIpOrg{}}}
+	return &GeoLocation{apis: []QueryGeoLocationAPI{&endpoints.IpApiCom{}, &endpoints.ReallyFreeGeoIpOrg{}, &endpoints.IpapiCo{}, &endpoints.GeoPluginCom{}}}
 }

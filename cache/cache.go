@@ -32,13 +32,13 @@ func Init(debug bool) {
 }
 
 func GetLocationFor(ip string) *geolocationStructs.GeoLocationItem {
-	ResoleLocationsFor([]string{ip})
+	ResolveLocationsFor([]string{ip})
 	geoLocationItem, _ := getSavedLocation(ip)
 
 	return &geoLocationItem
 }
 
-func ResoleLocationsFor(ips []string) int {
+func ResolveLocationsFor(ips []string) int {
 	ipsArraySize := len(ips)
 	batch := make([]string, 0)
 	cacheHits := 0
@@ -108,7 +108,7 @@ func saveLocations(locations *[]geolocationStructs.GeoLocationItem) error {
 	locs := db.Map(locations, db.MapToLocation)
 
 	bar := progressbar.Default(int64(len(*locations)), "Saving resolved IP's...")
-	for _, loc := range locs {
+	for idx, loc := range locs {
 		if loc.Status == "success" {
 			dbResult, err := db.AddOrUpdateLocation(loc)
 			if err != nil {
@@ -121,7 +121,7 @@ func saveLocations(locations *[]geolocationStructs.GeoLocationItem) error {
 			}
 			_ = bar.Add(1)
 		} else {
-			log.Warningln("Geo Location info for: ", loc.Ip, " failed: ", loc)
+			log.Warningln("Save location (", idx, ") failed: ", loc)
 		}
 	}
 	_ = bar.Finish()

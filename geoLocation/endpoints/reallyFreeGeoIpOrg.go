@@ -26,10 +26,10 @@ type ReallyFreeGeoIpOrgItem struct {
 }
 
 func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
-	mappedLocations := make([]structs.GeoLocationItem, len(*ips))
+	mappedLocations := make([]structs.GeoLocationItem, 0)
 	maxRequests := 1000
 
-	for idx, ip := range *ips {
+	for _, ip := range *ips {
 		resp, err := http.Get("https://reallyfreegeoip.org/json/" + ip)
 		if err != nil {
 			log.Warningln("No response from request")
@@ -49,7 +49,7 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.
 			}
 
 			_ = bar.Add(1)
-			mappedLocations[idx] = mappedLocation
+			mappedLocations = append(mappedLocations, mappedLocation)
 		} else {
 			_ = resp.Body.Close()
 			return nil, errors.New("got response from api: " + resp.Status)
