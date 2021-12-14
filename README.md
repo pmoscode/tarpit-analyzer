@@ -22,6 +22,17 @@ Currently, supported tarpits:
 - lines (KML and GeoJson format)
 - place marks (on attacker country with number of attacks)
 
+## Endpoints used
+
+To get the location of the ips, Tarpit-Analyzer uses following apis:
+
+- https://ip-api.com/
+- https://reallyfreegeoip.org/
+- https://ipapi.co/
+- https://www.geoplugin.com/webservices/json
+
+All endpoint can be used without a token / login.
+
 ## Installation
 
 Download binary from https://gitlab.com/pmoscode/tarpit-analyzer/-/releases for your arch. Or clone this repository and
