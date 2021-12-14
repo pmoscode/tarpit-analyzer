@@ -42,7 +42,6 @@ Flags:
 |              | Default  | Description                                                                             |
 |--------------|----------|-----------------------------------------------------------------------------------------|
 | --type       | endlessh | Import logs from 'endlessh' or 'sshTarpit'                                              |
-| --batch-size | 50       | Amount of ips which are send in one batch to GeoLocalization API. (If supported in API) |
 
 #### analyze
 

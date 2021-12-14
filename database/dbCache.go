@@ -1,8 +1,8 @@
 package database
 
 import (
-	geolocation "endlessh-analyzer/api/structs"
 	"endlessh-analyzer/database/schemas"
+	geolocation "endlessh-analyzer/geoLocation/structs"
 	"strings"
 )
 
@@ -108,9 +108,9 @@ func (r *DbCache) MapToGeoLocation(location schemas.Location) geolocation.GeoLoc
 	}
 }
 
-func (r *DbCache) Map(vs []geolocation.GeoLocationItem, f func(location geolocation.GeoLocationItem) schemas.Location) []schemas.Location {
-	vsm := make([]schemas.Location, len(vs))
-	for i, v := range vs {
+func (r *DbCache) Map(vs *[]geolocation.GeoLocationItem, f func(location geolocation.GeoLocationItem) schemas.Location) []schemas.Location {
+	vsm := make([]schemas.Location, len(*vs))
+	for i, v := range *vs {
 		vsm[i] = f(v)
 	}
 

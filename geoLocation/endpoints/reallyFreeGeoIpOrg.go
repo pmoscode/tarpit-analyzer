@@ -2,7 +2,7 @@ package endpoints
 
 import (
 	"encoding/json"
-	"endlessh-analyzer/api/structs"
+	"endlessh-analyzer/geoLocation/structs"
 	"errors"
 	log "github.com/sirupsen/logrus"
 	"net/http"
@@ -26,13 +26,13 @@ type ReallyFreeGeoIpOrgItem struct {
 
 func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem, error) {
 	mappedLocations := make([]structs.GeoLocationItem, len(*ips))
+	maxRequests := 1000
 
 	for idx, ip := range *ips {
 		resp, err := http.Get("https://reallyfreegeoip.org/json/" + ip)
 		if err != nil {
 			log.Warningln("No response from request")
 		}
-		defer resp.Body.Close()
 
 		if resp.StatusCode == 200 {
 			ipLocation := ReallyFreeGeoIpOrgItem{}
@@ -43,19 +43,31 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLoc
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
 			if err != nil {
+				_ = resp.Body.Close()
 				return nil, err
 			}
 
 			mappedLocations[idx] = mappedLocation
 		} else {
+			_ = resp.Body.Close()
 			return nil, errors.New("got response from api: " + resp.Status)
+		}
+
+		_ = resp.Body.Close()
+		maxRequests--
+		if maxRequests == 0 {
+			break
 		}
 	}
 
 	return mappedLocations, nil
 }
 
-func (r ReallyFreeGeoIpOrg) mapToGeoLocationItem(item *ReallyFreeGeoIpOrgItem) (structs.GeoLocationItem, error) {
+func (r ReallyFreeGeoIpOrg) Name() string {
+	return "ReallyFreeGeoIpOrg"
+}
+
+func (r *ReallyFreeGeoIpOrg) mapToGeoLocationItem(item *ReallyFreeGeoIpOrgItem) (structs.GeoLocationItem, error) {
 	return structs.GeoLocationItem{
 		Ip:            item.Ip,
 		Status:        "success",

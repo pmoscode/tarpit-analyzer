@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	geolocation "endlessh-analyzer/api/structs"
+	geolocation "endlessh-analyzer/geoLocation/structs"
 	"gorm.io/gorm"
 )
 

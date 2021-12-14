@@ -2,7 +2,6 @@ package importData
 
 import (
 	"database/sql"
-	"endlessh-analyzer/api"
 	cachedb "endlessh-analyzer/cache"
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/database"
@@ -36,7 +35,7 @@ func createImportSource(source ImportSource) Import {
 	return nil
 }
 
-func DoImport(source ImportSource, sourcePath string, batchSize int, context *cli.Context) error {
+func DoImport(source ImportSource, sourcePath string, context *cli.Context) error {
 	if context.Target != "" {
 		log.Infoln("--target was set to '" + context.Target + "', but is actually unused for import command...")
 	}
@@ -79,7 +78,7 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 		log.Debugln("Imported data saved to database")
 	}
 
-	cachedb.Init(api.IpApiCom, context.Debug)
+	cachedb.Init(context.Debug)
 	rows, errQuery := db.DbRawQuery(getQueryParametersUnlocalizedIps())
 	if errQuery != nil {
 		return errQuery
@@ -102,18 +101,18 @@ func DoImport(source ImportSource, sourcePath string, batchSize int, context *cl
 	}(rows)
 
 	log.Infoln("####### [Start] Processing IP's #######")
-	processIps(ips, batchSize)
+	processIps(ips)
 	log.Infoln("####### [End] Processing IP's #######")
 
 	return nil
 }
 
-func processIps(ips []string, batchSize int) {
+func processIps(ips []string) {
 	if len(ips) == 0 {
 		log.Infoln("No IP's to process...")
 		return
 	}
 
-	processedIps := cachedb.ResoleLocationsFor(ips, batchSize)
+	processedIps := cachedb.ResoleLocationsFor(ips)
 	log.Infoln("Processed IP's: ", processedIps)
 }

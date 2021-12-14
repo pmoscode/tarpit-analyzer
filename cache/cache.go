@@ -1,9 +1,9 @@
 package cache
 
 import (
-	"endlessh-analyzer/api"
-	geolocation "endlessh-analyzer/api/structs"
 	"endlessh-analyzer/database"
+	"endlessh-analyzer/geoLocation"
+	geolocationStructs "endlessh-analyzer/geoLocation/structs"
 	"errors"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
@@ -11,8 +11,7 @@ import (
 )
 
 var (
-	db             database.DbCache
-	geolocationApi api.Api
+	db database.DbCache
 )
 
 type Result int
@@ -23,8 +22,7 @@ const (
 	NoHit
 )
 
-func Init(api api.Api, debug bool) {
-	geolocationApi = api
+func Init(debug bool) {
 	dbInit, err := database.CreateDbCache(debug)
 	if err != nil {
 		log.Panicln("Cache database could not be loaded.", err)
@@ -33,115 +31,83 @@ func Init(api api.Api, debug bool) {
 	db = dbInit
 }
 
-func GetLocationFor(ip string) *geolocation.GeoLocationItem {
-	geoLocationItem, result := getLocation(ip)
+func GetLocationFor(ip string) *geolocationStructs.GeoLocationItem {
+	ResoleLocationsFor([]string{ip})
+	geoLocationItem, _ := getSavedLocation(ip)
 
-	switch result {
-	case Ok:
-		return &geoLocationItem
-	case RecordOutdated:
-		err := db.DeleteLocation(geoLocationItem)
-		if err != nil {
-			return nil
+	return &geoLocationItem
+}
+
+func ResoleLocationsFor(ips []string) int {
+	ipsArraySize := len(ips)
+	batch := make([]string, 0)
+	cacheHits := 0
+	processedIps := 0
+
+	bar := progressbar.Default(int64(ipsArraySize), "Checking IP's...")
+
+	for i := 0; i < ipsArraySize; i++ {
+		geoLocationItem, cacheResult := getSavedLocation(ips[i])
+
+		switch cacheResult {
+		case Ok:
+			cacheHits++
+		case RecordOutdated:
+			err := db.DeleteLocation(geoLocationItem)
+			if err != nil {
+				log.Errorln("Could not delete outdated geoLocationItem: ", geoLocationItem)
+			}
+			fallthrough
+		case NoHit:
+			batch = append(batch, ips[i])
 		}
+
+		_ = bar.Add(1)
 	}
 
-	geolocationApi := api.CreateGeoLocationAPI(geolocationApi)
-	ipBatch := []string{ip}
-	resolved, errApi := geolocationApi.QueryGeoLocationAPI(&ipBatch)
+	_ = bar.Finish()
 
-	if errApi != nil {
-		log.Errorln("Geolocation Api error: ", errApi)
-		return nil
-	} else {
-		errDb := saveLocations(resolved)
+	if len(batch) > 0 {
+		geolocation := geoLocation.CreateGeoLocation()
+
+		locations, err := geolocation.ResolveLocations(batch)
+		if err != nil {
+			return 0
+		}
+		processedIps = len(*locations)
+		errDb := saveLocations(locations)
 		if errDb != nil {
 			log.Errorln("Save Location to DB error: ", errDb)
 		}
 	}
 
-	return &resolved[0]
-}
-
-func ResoleLocationsFor(ips []string, batchSize int) int {
-	processedIps := 0
-	ipsArraySize := len(ips)
-	batch := make([]string, 0)
-	cacheHits := 0
-	bar := progressbar.Default(int64(ipsArraySize), "Checking IP's...")
-
-	for i := 0; i < ipsArraySize; i++ {
-		_, cacheResult := getLocation(ips[i])
-
-		if cacheResult == NoHit || cacheResult == RecordOutdated {
-			batch = append(batch, ips[i])
-		} else if cacheResult == Ok {
-			cacheHits++
-		} else {
-			log.Errorln("Something went wrong for ip: ", ips[i])
-		}
-
-		bar.Add(1)
-	}
-	bar.Finish()
-
-	geolocationApi := api.CreateGeoLocationAPI(geolocationApi)
-	batchCount := len(batch)
-	if batchCount > 0 {
-		bar = progressbar.Default(int64(batchCount), "Processing IP's...")
-
-		for i := 0; i < batchCount; i += batchSize {
-			if i+batchSize >= batchCount {
-				batchSize = batchCount - i
-			}
-
-			ipBatch := batch[i : i+batchSize]
-			resolved, errApi := geolocationApi.QueryGeoLocationAPI(&ipBatch)
-
-			processedIps = processedIps + len(resolved)
-			bar.Add(len(resolved))
-
-			if errApi != nil {
-				log.Errorln("Geolocation Api error: ", errApi)
-			} else {
-				errDb := saveLocations(resolved)
-				if errDb != nil {
-					log.Errorln("Save Location to DB error: ", errDb)
-				}
-			}
-			err := saveLocations(resolved)
-			if err != nil {
-				log.Warningln("Could not save location: ", resolved)
-			}
-		}
-	}
-	bar.Finish()
 	log.Debugln("Cache Hits: ", cacheHits)
 
 	return processedIps + cacheHits
 }
 
-func getLocation(ip string) (geolocation.GeoLocationItem, Result) {
+func getSavedLocation(ip string) (geolocationStructs.GeoLocationItem, Result) {
 	location, dbResult := db.GetLocation(ip)
 
 	if dbResult == database.DbOk {
-		geoLocation := db.MapToGeoLocation(location)
+		geoLocationItem := db.MapToGeoLocation(location)
 
 		var maxAge float64 = 4 * 24
 		if time2.Now().Sub(location.UpdatedAt).Hours() > maxAge {
 			log.Infoln("Record for ip: ", ip, " is older than ", maxAge, " hours... ")
-			return geoLocation, RecordOutdated
+			return geoLocationItem, RecordOutdated
 		}
 
-		return geoLocation, Ok
+		return geoLocationItem, Ok
 	}
 
-	return geolocation.GeoLocationItem{}, NoHit
+	return geolocationStructs.GeoLocationItem{}, NoHit
 }
 
-func saveLocations(locations []geolocation.GeoLocationItem) error {
+func saveLocations(locations *[]geolocationStructs.GeoLocationItem) error {
 	locs := db.Map(locations, db.MapToLocation)
 
+	bar := progressbar.Default(int64(len(*locations)), "Saving resolved IP's...")
 	for _, loc := range locs {
 		if loc.Status == "success" {
 			dbResult, err := db.AddOrUpdateLocation(loc)
@@ -153,10 +119,12 @@ func saveLocations(locations []geolocation.GeoLocationItem) error {
 				log.Errorln("something went wrong for location: ", loc)
 				return errors.New("something went wrong for location IP: " + loc.Ip)
 			}
+			_ = bar.Add(1)
 		} else {
 			log.Warningln("Geo Location info for: ", loc.Ip, " failed: ", loc)
 		}
 	}
+	_ = bar.Finish()
 
 	return nil
 }
