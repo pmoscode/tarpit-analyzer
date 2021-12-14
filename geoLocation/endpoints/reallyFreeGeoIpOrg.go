@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"endlessh-analyzer/geoLocation/structs"
 	"errors"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 )
@@ -24,7 +25,7 @@ type ReallyFreeGeoIpOrgItem struct {
 	MetroCode   int     `json:"metro_code"`
 }
 
-func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem, error) {
+func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	mappedLocations := make([]structs.GeoLocationItem, len(*ips))
 	maxRequests := 1000
 
@@ -47,6 +48,7 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLoc
 				return nil, err
 			}
 
+			_ = bar.Add(1)
 			mappedLocations[idx] = mappedLocation
 		} else {
 			_ = resp.Body.Close()

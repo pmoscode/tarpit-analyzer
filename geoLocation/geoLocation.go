@@ -8,7 +8,7 @@ import (
 )
 
 type QueryGeoLocationAPI interface {
-	QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem, error)
+	QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error)
 	Name() string
 }
 
@@ -21,10 +21,9 @@ func (r *GeoLocation) ResolveLocations(ips []string) (*[]structs.GeoLocationItem
 
 	bar := progressbar.Default(int64(len(ips)), "Geo location of IP's...")
 	for _, api := range r.apis {
-		geoLocationItems, err := api.QueryGeoLocationAPI(&ips)
+		geoLocationItems, err := api.QueryGeoLocationAPI(&ips, bar)
 		if err == nil {
 			resolvedItemsCount := len(geoLocationItems)
-			_ = bar.Add(resolvedItemsCount)
 			ips = ips[resolvedItemsCount:]
 			resolvedGeoLocationItems = append(resolvedGeoLocationItems, geoLocationItems...)
 			if len(ips) == 0 {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"endlessh-analyzer/geoLocation/structs"
 	"errors"
+	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
@@ -27,7 +28,7 @@ type IpApiComItem struct {
 	Query         string  `json:"query"`
 }
 
-func (r IpApiCom) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem, error) {
+func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	batchSize := 100
 	maxRequests := 15
 	batchCount := len(*ips)
@@ -72,6 +73,8 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string) ([]structs.GeoLocationItem,
 			if errMap != nil {
 				return nil, errMap
 			}
+
+			_ = bar.Add(len(mappedLocationsLocal))
 
 			_ = resp.Body.Close()
 			mappedLocations = append(mappedLocations, mappedLocationsLocal...)
