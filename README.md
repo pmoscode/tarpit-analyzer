@@ -98,3 +98,7 @@ No special flags.
 ./endlessh_analyzer analyze --target=analyze.txt # Generate analysis
 ./endlessh_analyzer export json --start-date=2021-07-16 --end-date=2021-07-18 --target=export.json # Exports a given data range to json format
 ```
+
+## Known issues
+
+Tests missing O_o
