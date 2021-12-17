@@ -5,10 +5,7 @@ import (
 	"endlessh-analyzer/cli"
 )
 
-type AnalyzeCmd struct {
-	// TODO Move to common parameters
-	BatchSize int `default:"50" help:"Query batch size for GEO IP API (if supported by GEO IP API)."`
-}
+type AnalyzeCmd struct{}
 
 func (r *AnalyzeCmd) Run(ctx *cli.Context) error {
 	return analyze.DoAnalyze(ctx)
