@@ -13,6 +13,7 @@ var cliStruct struct {
 	EndDate   string `default:"unset" help:"Only consider data ending at <yyyy-mm-dd>"`
 
 	Import  modules.ImportCmd  `cmd:"" help:"ImportCmd logs from different tarpit apps."`
+	Resolve modules.ResolveCmd `cmd:"" help:"Resolve all IP's which haven't a corresponding GeoLocation value."`
 	Analyze modules.AnalyzeCmd `cmd:"" help:"Analyze file."`
 	Export  modules.ExportCmd  `cmd:"" help:"Export to different formats"`
 }
