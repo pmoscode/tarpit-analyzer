@@ -41,20 +41,21 @@ type IpapiCoItem struct {
 }
 
 func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
-	maxRequests := 1000 // per 24 hours and max 30000 per month
+	maxRequests := 999 // per 24 hours and max 30000 per month
 	mappedLocations := make([]structs.GeoLocationItem, 0)
 
 	for _, ip := range *ips {
 		resp, err := http.Get("https://ipapi.co/" + ip + "/json/")
 		if err != nil {
-			log.Warningln("No response from request")
+			log.Debugln("No response from request")
+			return nil, err
 		}
 
 		if resp.StatusCode == 200 {
 			ipLocation := IpapiCoItem{}
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
-				log.Errorln(err)
+				log.Debugln(err)
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
@@ -67,7 +68,7 @@ func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar
 			mappedLocations = append(mappedLocations, mappedLocation)
 		} else {
 			_ = resp.Body.Close()
-			log.Infoln("Done requests: ", 200-maxRequests)
+			log.Debugln("Done requests: ", 200-maxRequests)
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
 

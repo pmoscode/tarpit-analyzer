@@ -47,7 +47,7 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBa
 
 			resp, errRequest := http.Post("http://ip-api.com/batch?fields=status,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,query", "application/json", bytes.NewBufferString(body))
 			if errRequest != nil {
-				log.Warningln("No response from request")
+				log.Debugln("No response from request")
 				return nil, errRequest
 			}
 
@@ -65,7 +65,7 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBa
 			ipLocation := make([]IpApiComItem, 0)
 			errJson := json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if errJson != nil {
-				log.Errorln(errJson)
+				log.Debugln(errJson)
 				return nil, errJson
 			}
 

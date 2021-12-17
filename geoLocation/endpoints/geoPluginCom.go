@@ -47,14 +47,15 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 	for _, ip := range *ips {
 		resp, err := http.Get("http://www.geoplugin.net/json.gp?ip=" + ip)
 		if err != nil {
-			log.Warningln("No response from request")
+			log.Debugln("No response from request")
+			return nil, err
 		}
 
 		if resp.StatusCode == 200 {
 			ipLocation := GeoPluginComItem{}
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
-				log.Errorln(err)
+				log.Debugln(err)
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
@@ -67,7 +68,7 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 			mappedLocations = append(mappedLocations, mappedLocation)
 		} else {
 			_ = resp.Body.Close()
-			log.Infoln("Done requests: ", 200-maxRequests)
+			log.Debugln("Done requests: ", 200-maxRequests)
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
 
