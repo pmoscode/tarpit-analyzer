@@ -35,7 +35,7 @@ func createImportSource(source ImportSource) Import {
 	return nil
 }
 
-func DoImport(source ImportSource, sourcePath string, context *cli.Context) error {
+func DoImport(source ImportSource, sourcePath string, skipIpResolving bool, context *cli.Context) error {
 	if context.Target != "" {
 		log.Infoln("--target was set to '" + context.Target + "', but is actually unused for import command...")
 	}
@@ -100,9 +100,13 @@ func DoImport(source ImportSource, sourcePath string, context *cli.Context) erro
 		}
 	}(rows)
 
-	log.Infoln("####### [Start] Processing IP's #######")
-	processIps(ips)
-	log.Infoln("####### [End] Processing IP's #######")
+	if !skipIpResolving {
+		log.Infoln("####### [Start] Processing IP's #######")
+		processIps(ips)
+		log.Infoln("####### [End] Processing IP's #######")
+	} else {
+		log.Infoln("####### IP resolving skipped #######")
+	}
 
 	return nil
 }
