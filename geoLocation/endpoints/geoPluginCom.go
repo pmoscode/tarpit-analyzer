@@ -11,7 +11,9 @@ import (
 	"time"
 )
 
-type GeoPluginCom struct{}
+type GeoPluginCom struct {
+	lastExecutionFinished time.Time
+}
 
 type GeoPluginComItem struct {
 	GeopluginRequest                string  `json:"geoplugin_request"`
@@ -40,7 +42,7 @@ type GeoPluginComItem struct {
 	GeopluginCurrencyConverter      float64 `json:"geoplugin_currencyConverter"`
 }
 
-func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
+func (r *GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	maxRequests := 500
 	mappedLocations := make([]structs.GeoLocationItem, 0)
 
@@ -48,6 +50,8 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 		resp, err := http.Get("http://www.geoplugin.net/json.gp?ip=" + ip)
 		if err != nil {
 			log.Debugln("No response from request")
+			r.lastExecutionFinished = time.Now()
+
 			return nil, err
 		}
 
@@ -56,11 +60,16 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
 				log.Debugln(err)
+				r.lastExecutionFinished = time.Now()
+
+				return nil, err
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
 			if err != nil {
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time.Now()
+
 				return nil, err
 			}
 
@@ -69,6 +78,8 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 		} else {
 			_ = resp.Body.Close()
 			log.Debugln("Done requests: ", 200-maxRequests)
+			r.lastExecutionFinished = time.Now()
+
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
 
@@ -80,10 +91,12 @@ func (r GeoPluginCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.Progre
 		time.Sleep(1 * time.Second)
 	}
 
+	r.lastExecutionFinished = time.Now()
+
 	return mappedLocations, nil
 }
 
-func (r GeoPluginCom) Name() string {
+func (r *GeoPluginCom) Name() string {
 	return "GeoPluginCom"
 }
 
@@ -105,4 +118,8 @@ func (r *GeoPluginCom) mapToGeoLocationItem(item *GeoPluginComItem) (structs.Geo
 		City:          item.GeopluginCity,
 		Zip:           "-1",
 	}, nil
+}
+
+func (r *GeoPluginCom) CanHandle() bool {
+	return time.Now().Sub(r.lastExecutionFinished).Minutes() > 60
 }

@@ -9,9 +9,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	time2 "time"
 )
 
-type IpApiCom struct{}
+type IpApiCom struct {
+	lastExecutionFinished time2.Time
+}
 
 type IpApiComItem struct {
 	Status        string  `json:"status"`
@@ -28,7 +31,7 @@ type IpApiComItem struct {
 	Query         string  `json:"query"`
 }
 
-func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
+func (r *IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	batchSize := 100
 	maxRequests := 15
 	batchCount := len(*ips)
@@ -48,17 +51,23 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBa
 			resp, errRequest := http.Post("http://ip-api.com/batch?fields=status,continent,continentCode,country,countryCode,region,regionName,city,zip,lat,lon,query", "application/json", bytes.NewBufferString(body))
 			if errRequest != nil {
 				log.Debugln("No response from request")
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, errRequest
 			}
 
 			if resp.StatusCode == 429 {
 				log.Debugln("Max requests (15) per minute reached!")
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, errors.New("max requests reached")
 			}
 
 			if resp.StatusCode != 200 {
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, errors.New("got response from api: " + resp.Status)
 			}
 
@@ -66,11 +75,15 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBa
 			errJson := json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if errJson != nil {
 				log.Debugln(errJson)
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, errJson
 			}
 
 			mappedLocationsLocal, errMap := r.mapToGeoLocationItem(&ipLocation)
 			if errMap != nil {
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, errMap
 			}
 
@@ -86,10 +99,12 @@ func (r IpApiCom) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBa
 		}
 	}
 
+	r.lastExecutionFinished = time2.Now()
+
 	return mappedLocations, nil
 }
 
-func (r IpApiCom) Name() string {
+func (r *IpApiCom) Name() string {
 	return "IpApiCom"
 }
 
@@ -118,4 +133,8 @@ func (r *IpApiCom) mapToGeoLocationItem(items *[]IpApiComItem) ([]structs.GeoLoc
 	}
 
 	return locations, nil
+}
+
+func (r *IpApiCom) CanHandle() bool {
+	return time2.Now().Sub(r.lastExecutionFinished).Minutes() > 1
 }

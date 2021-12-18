@@ -8,9 +8,12 @@ import (
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
+	time2 "time"
 )
 
-type IpWhoIsIo struct{}
+type IpWhoIsIo struct {
+	lastExecutionFinished time2.Time
+}
 
 type IpWhoIsIoItem struct {
 	Ip                string  `json:"ip"`
@@ -33,18 +36,18 @@ type IpWhoIsIoItem struct {
 	Isp               string  `json:"isp"`
 	Timezone          string  `json:"timezone"`
 	TimezoneName      string  `json:"timezone_name"`
-	TimezoneDstOffset int     `json:"timezone_dstOffset"`
-	TimezoneGmtOffset int     `json:"timezone_gmtOffset"`
+	TimezoneDstOffset float64 `json:"timezone_dstOffset"`
+	TimezoneGmtOffset float64 `json:"timezone_gmtOffset"`
 	TimezoneGmt       string  `json:"timezone_gmt"`
 	Currency          string  `json:"currency"`
 	CurrencyCode      string  `json:"currency_code"`
 	CurrencySymbol    string  `json:"currency_symbol"`
-	CurrencyRates     int     `json:"currency_rates"`
+	CurrencyRates     float64 `json:"currency_rates"`
 	CurrencyPlural    string  `json:"currency_plural"`
 	CompletedRequests int     `json:"completed_requests"`
 }
 
-func (r IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
+func (r *IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	mappedLocations := make([]structs.GeoLocationItem, 0)
 	maxRequests := 10000 // per month
 
@@ -53,6 +56,7 @@ func (r IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressB
 		if err != nil {
 			log.Debugln("No response from request: ")
 			_ = resp.Body.Close()
+			r.lastExecutionFinished = time2.Now()
 
 			return nil, err
 		}
@@ -62,12 +66,15 @@ func (r IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressB
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
 				log.Debugln(err)
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, err
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
 			if err != nil {
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time2.Now()
 
 				return nil, err
 			}
@@ -76,6 +83,7 @@ func (r IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressB
 			mappedLocations = append(mappedLocations, mappedLocation)
 		} else {
 			_ = resp.Body.Close()
+			r.lastExecutionFinished = time2.Now()
 
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
@@ -87,10 +95,12 @@ func (r IpWhoIsIo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressB
 		}
 	}
 
+	r.lastExecutionFinished = time2.Now()
+
 	return mappedLocations, nil
 }
 
-func (r IpWhoIsIo) Name() string {
+func (r *IpWhoIsIo) Name() string {
 	return "IpWhoIsIo"
 }
 
@@ -109,4 +119,8 @@ func (r *IpWhoIsIo) mapToGeoLocationItem(item *IpWhoIsIoItem) (structs.GeoLocati
 		City:          item.City,
 		Zip:           "-1",
 	}, nil
+}
+
+func (r *IpWhoIsIo) CanHandle() bool {
+	return time2.Now().Sub(r.lastExecutionFinished).Hours() > (24 * 30)
 }

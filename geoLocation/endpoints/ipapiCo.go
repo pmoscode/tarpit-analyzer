@@ -10,7 +10,9 @@ import (
 	"time"
 )
 
-type IpapiCo struct{}
+type IpapiCo struct {
+	lastExecutionFinished time.Time
+}
 
 type IpapiCoItem struct {
 	Ip                 string  `json:"ip"`
@@ -40,7 +42,7 @@ type IpapiCoItem struct {
 	Org                string  `json:"org"`
 }
 
-func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
+func (r *IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	maxRequests := 999 // per 24 hours and max 30000 per month
 	mappedLocations := make([]structs.GeoLocationItem, 0)
 
@@ -48,6 +50,8 @@ func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar
 		resp, err := http.Get("https://ipapi.co/" + ip + "/json/")
 		if err != nil {
 			log.Debugln("No response from request")
+			r.lastExecutionFinished = time.Now()
+
 			return nil, err
 		}
 
@@ -56,11 +60,16 @@ func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
 				log.Debugln(err)
+				r.lastExecutionFinished = time.Now()
+
+				return nil, err
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
 			if err != nil {
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time.Now()
+
 				return nil, err
 			}
 
@@ -69,6 +78,8 @@ func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar
 		} else {
 			_ = resp.Body.Close()
 			log.Debugln("Done requests: ", 200-maxRequests)
+			r.lastExecutionFinished = time.Now()
+
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
 
@@ -80,10 +91,12 @@ func (r IpapiCo) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar
 		time.Sleep(1 * time.Second)
 	}
 
+	r.lastExecutionFinished = time.Now()
+
 	return mappedLocations, nil
 }
 
-func (r IpapiCo) Name() string {
+func (r *IpapiCo) Name() string {
 	return "IpapiCo"
 }
 
@@ -102,4 +115,8 @@ func (r *IpapiCo) mapToGeoLocationItem(item *IpapiCoItem) (structs.GeoLocationIt
 		City:          item.City,
 		Zip:           item.Postal,
 	}, nil
+}
+
+func (r *IpapiCo) CanHandle() bool {
+	return time.Now().Sub(r.lastExecutionFinished).Hours() > 24
 }

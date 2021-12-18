@@ -7,9 +7,12 @@ import (
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"net/http"
+	time2 "time"
 )
 
-type ReallyFreeGeoIpOrg struct{}
+type ReallyFreeGeoIpOrg struct {
+	lastExecutionFinished time2.Time
+}
 
 type ReallyFreeGeoIpOrgItem struct {
 	Ip          string  `json:"ip"`
@@ -25,7 +28,7 @@ type ReallyFreeGeoIpOrgItem struct {
 	MetroCode   int     `json:"metro_code"`
 }
 
-func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
+func (r *ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.ProgressBar) ([]structs.GeoLocationItem, error) {
 	mappedLocations := make([]structs.GeoLocationItem, 0)
 	maxRequests := 1500
 
@@ -34,6 +37,7 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.
 		if err != nil {
 			log.Debugln("No response from request: ")
 			_ = resp.Body.Close()
+			r.lastExecutionFinished = time2.Now()
 
 			return nil, err
 		}
@@ -43,12 +47,15 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.
 			err = json.NewDecoder(resp.Body).Decode(&ipLocation)
 			if err != nil {
 				log.Debugln(err)
+				r.lastExecutionFinished = time2.Now()
+
 				return nil, err
 			}
 
 			mappedLocation, err := r.mapToGeoLocationItem(&ipLocation)
 			if err != nil {
 				_ = resp.Body.Close()
+				r.lastExecutionFinished = time2.Now()
 
 				return nil, err
 			}
@@ -57,6 +64,7 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.
 			mappedLocations = append(mappedLocations, mappedLocation)
 		} else {
 			_ = resp.Body.Close()
+			r.lastExecutionFinished = time2.Now()
 
 			return nil, errors.New("got response from api: " + resp.Status)
 		}
@@ -68,10 +76,12 @@ func (r ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar.
 		}
 	}
 
+	r.lastExecutionFinished = time2.Now()
+
 	return mappedLocations, nil
 }
 
-func (r ReallyFreeGeoIpOrg) Name() string {
+func (r *ReallyFreeGeoIpOrg) Name() string {
 	return "ReallyFreeGeoIpOrg"
 }
 
@@ -90,4 +100,8 @@ func (r *ReallyFreeGeoIpOrg) mapToGeoLocationItem(item *ReallyFreeGeoIpOrgItem) 
 		City:          item.City,
 		Zip:           item.ZipCode,
 	}, nil
+}
+
+func (r *ReallyFreeGeoIpOrg) CanHandle() bool {
+	return time2.Now().Sub(r.lastExecutionFinished).Minutes() > 1
 }
