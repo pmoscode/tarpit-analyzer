@@ -30,6 +30,7 @@ To get the location of the ips, Tarpit-Analyzer uses following apis:
 - https://reallyfreegeoip.org/
 - https://ipapi.co/
 - https://www.geoplugin.com/webservices/json
+- http://ipwhois.app/
 
 All endpoint can be used without a token / login.
 
