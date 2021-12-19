@@ -3,7 +3,10 @@ package main
 import (
 	"endlessh-analyzer/cli"
 	"endlessh-analyzer/cli/modules"
+	"endlessh-analyzer/helper"
 	"github.com/alecthomas/kong"
+	log "github.com/sirupsen/logrus"
+	"os"
 )
 
 var cliStruct struct {
@@ -19,6 +22,15 @@ var cliStruct struct {
 }
 
 func main() {
+	file, errLog := os.OpenFile("logrus.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if errLog == nil {
+		log.SetOutput(file)
+	} else {
+		log.Info("Failed to log to file, using default stderr")
+	}
+
+	log.AddHook(helper.NewConsoleHook(false))
+
 	ctx := kong.Parse(&cliStruct)
 
 	err := ctx.Run(&cli.Context{Debug: cliStruct.Debug, Target: cliStruct.Target, StartDate: cliStruct.StartDate, EndDate: cliStruct.EndDate})
