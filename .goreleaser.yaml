@@ -17,9 +17,9 @@ builds:
     goarch:
       - amd64
 nfpms:
-- maintainer: pmoscode <ifo@pmoscode.de>
+- maintainer: pmoscode <info@pmoscode.de>
   description: Tarpit Analyzer
-  homepage: https://gitlab.com/pmoscode/tarpit-analyzer
+  homepage: https://gitlab.com/pmoscodegrp/tarpit-analyzer
   license: GPLv3
   formats:
   - deb

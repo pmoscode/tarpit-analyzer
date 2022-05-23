@@ -28,8 +28,8 @@ release:
     - tags
   script: |
     docker run --rm --privileged \
-      -v $PWD:/go/src/gitlab.com/pmoscode/tarpit-analyzer \
-      -w /go/src/gitlab.com/pmoscode/tarpit-analyzer \
+      -v $PWD:/go/src/gitlab.com/pmoscodegrp/tarpit-analyzer \
+      -w /go/src/gitlab.com/pmoscodegrp/tarpit-analyzer \
       -v /var/run/docker.sock:/var/run/docker.sock \
       -e DOCKER_USERNAME -e DOCKER_PASSWORD -e DOCKER_REGISTRY  \
       -e GITLAB_TOKEN \
