@@ -1,4 +1,4 @@
-module endlessh-analyzer
+module tarpit-analyzer
 
 go 1.22
 
