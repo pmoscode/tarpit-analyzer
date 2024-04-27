@@ -1,5 +1,5 @@
 .idea
-endlessh-analyzer
+tarpit-analyzer
 build/
 test/**/*.*
 *.db

@@ -1,9 +1,9 @@
 package modules
 
 import (
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/importData"
 	"errors"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/importData"
 )
 
 type ImportCmd struct {

@@ -1,12 +1,12 @@
 package modules
 
 import (
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/database/schemas"
-	"endlessh-analyzer/helper"
 	geojson "github.com/paulmach/go.geojson"
 	log "github.com/sirupsen/logrus"
 	"strconv"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/database/schemas"
+	"tarpit-analyzer/helper"
 	time2 "time"
 )
 

@@ -1,8 +1,8 @@
 package statistics
 
 import (
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/helper"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/helper"
 	time2 "time"
 )
 

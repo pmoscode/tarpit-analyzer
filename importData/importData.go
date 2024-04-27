@@ -2,14 +2,14 @@ package importData
 
 import (
 	"database/sql"
-	cachedb "endlessh-analyzer/cache"
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/helper"
-	"endlessh-analyzer/importData/modules"
-	"endlessh-analyzer/importData/structs"
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	cachedb "tarpit-analyzer/cache"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/helper"
+	"tarpit-analyzer/importData/modules"
+	"tarpit-analyzer/importData/structs"
 	time2 "time"
 )
 

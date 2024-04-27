@@ -1,8 +1,8 @@
 package modules
 
 import (
-	"endlessh-analyzer/analyze"
-	"endlessh-analyzer/cli"
+	"tarpit-analyzer/analyze"
+	"tarpit-analyzer/cli"
 )
 
 type AnalyzeCmd struct{}

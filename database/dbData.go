@@ -3,13 +3,13 @@ package database
 import (
 	"crypto"
 	"encoding/hex"
-	"endlessh-analyzer/database/schemas"
-	"endlessh-analyzer/importData/structs"
 	"fmt"
 	"github.com/schollz/progressbar/v3"
 	"gorm.io/gorm"
 	"reflect"
 	"strings"
+	"tarpit-analyzer/database/schemas"
+	"tarpit-analyzer/importData/structs"
 )
 
 type DbData struct {

@@ -1,10 +1,10 @@
 package geoLocation
 
 import (
-	"endlessh-analyzer/geoLocation/endpoints"
-	"endlessh-analyzer/geoLocation/structs"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
+	"tarpit-analyzer/geoLocation/endpoints"
+	"tarpit-analyzer/geoLocation/structs"
 )
 
 type QueryGeoLocationAPI interface {

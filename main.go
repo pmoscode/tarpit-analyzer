@@ -1,12 +1,12 @@
 package main
 
 import (
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/cli/modules"
-	"endlessh-analyzer/helper"
 	"github.com/alecthomas/kong"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/cli/modules"
+	"tarpit-analyzer/helper"
 )
 
 var cliStruct struct {

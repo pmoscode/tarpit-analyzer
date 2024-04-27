@@ -2,7 +2,7 @@ package schemas
 
 import (
 	"database/sql"
-	"endlessh-analyzer/importData/structs"
+	"tarpit-analyzer/importData/structs"
 	"time"
 )
 

@@ -1,8 +1,8 @@
 package modules
 
 import (
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/export"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/export"
 )
 
 type ExportCmd struct {

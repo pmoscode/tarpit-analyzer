@@ -1,8 +1,8 @@
 package schemas
 
 import (
-	geolocation "endlessh-analyzer/geoLocation/structs"
 	"gorm.io/gorm"
+	geolocation "tarpit-analyzer/geoLocation/structs"
 )
 
 type Location struct {

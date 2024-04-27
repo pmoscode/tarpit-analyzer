@@ -2,11 +2,11 @@ package modules
 
 import (
 	"encoding/json"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/database/schemas"
-	"endlessh-analyzer/export/helper"
 	"strconv"
 	"strings"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/database/schemas"
+	"tarpit-analyzer/export/helper"
 	time2 "time"
 )
 

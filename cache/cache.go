@@ -1,12 +1,12 @@
 package cache
 
 import (
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/geoLocation"
-	geolocationStructs "endlessh-analyzer/geoLocation/structs"
 	"errors"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/geoLocation"
+	geolocationStructs "tarpit-analyzer/geoLocation/structs"
 	time2 "time"
 )
 

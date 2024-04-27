@@ -1,12 +1,12 @@
 package export
 
 import (
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/export/helper"
-	"endlessh-analyzer/export/modules"
 	"log"
 	"strconv"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/export/helper"
+	"tarpit-analyzer/export/modules"
 	time2 "time"
 )
 

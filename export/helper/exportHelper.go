@@ -2,12 +2,12 @@ package helper
 
 import (
 	"bufio"
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/database/schemas"
-	"endlessh-analyzer/helper"
 	log "github.com/sirupsen/logrus"
 	"os"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/database/schemas"
+	"tarpit-analyzer/helper"
 	time2 "time"
 )
 

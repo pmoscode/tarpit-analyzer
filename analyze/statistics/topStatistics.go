@@ -2,8 +2,6 @@ package statistics
 
 import (
 	"database/sql"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/database/schemas"
 	"fmt"
 	"github.com/hako/durafmt"
 	"github.com/olekukonko/tablewriter"
@@ -12,6 +10,8 @@ import (
 	"golang.org/x/text/message"
 	"strconv"
 	"strings"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/database/schemas"
 	time2 "time"
 )
 

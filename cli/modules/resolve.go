@@ -1,8 +1,8 @@
 package modules
 
 import (
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/resolve"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/resolve"
 )
 
 type ResolveCmd struct{}

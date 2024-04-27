@@ -2,15 +2,15 @@ package modules
 
 import (
 	"bufio"
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/helper"
-	"endlessh-analyzer/importData/structs"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/helper"
+	"tarpit-analyzer/importData/structs"
 	time2 "time"
 )
 

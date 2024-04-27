@@ -2,14 +2,14 @@ package database
 
 import (
 	"database/sql"
-	"endlessh-analyzer/database/countryGeoLocationData"
-	"endlessh-analyzer/database/schemas"
 	"github.com/sirupsen/logrus"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 	"log"
 	"os"
+	"tarpit-analyzer/database/countryGeoLocationData"
+	"tarpit-analyzer/database/schemas"
 	time2 "time"
 )
 

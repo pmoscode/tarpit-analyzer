@@ -1,9 +1,9 @@
 package database
 
 import (
-	"endlessh-analyzer/database/schemas"
-	geolocation "endlessh-analyzer/geoLocation/structs"
 	"strings"
+	"tarpit-analyzer/database/schemas"
+	geolocation "tarpit-analyzer/geoLocation/structs"
 )
 
 type DbCache struct {

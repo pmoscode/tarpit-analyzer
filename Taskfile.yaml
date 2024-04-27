@@ -1,0 +1,15 @@
+version: '3'
+
+tasks:
+  upgrade:
+    desc: Update go dependencies
+    cmds:
+      - go get -u -d .
+
+  build:
+    desc: Build the binary
+    cmd: go build .
+
+  clean:
+    desc: Cleanup dependencies
+    cmd: go mod tidy

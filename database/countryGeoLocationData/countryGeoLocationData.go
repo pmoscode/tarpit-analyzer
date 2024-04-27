@@ -1,8 +1,8 @@
 package countryGeoLocationData
 
 import (
-	"endlessh-analyzer/database/schemas"
 	"strconv"
+	"tarpit-analyzer/database/schemas"
 )
 
 var CountryGeoLocationData []schemas.CountryGeoLocation

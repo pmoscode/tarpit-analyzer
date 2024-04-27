@@ -3,12 +3,12 @@ package endpoints
 import (
 	"bytes"
 	"encoding/json"
-	"endlessh-analyzer/geoLocation/structs"
 	"errors"
 	"github.com/schollz/progressbar/v3"
 	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
+	"tarpit-analyzer/geoLocation/structs"
 	time2 "time"
 )
 

@@ -1,7 +1,7 @@
 package statistics
 
 import (
-	cachedb "endlessh-analyzer/cache"
+	cachedb "tarpit-analyzer/cache"
 )
 
 func getCountryFor(ip string, debug bool) string {

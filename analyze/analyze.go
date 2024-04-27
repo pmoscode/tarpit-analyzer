@@ -1,11 +1,11 @@
 package analyze
 
 import (
-	"endlessh-analyzer/analyze/statistics"
-	"endlessh-analyzer/cli"
-	"endlessh-analyzer/database"
-	"endlessh-analyzer/helper"
 	log "github.com/sirupsen/logrus"
+	"tarpit-analyzer/analyze/statistics"
+	"tarpit-analyzer/cli"
+	"tarpit-analyzer/database"
+	"tarpit-analyzer/helper"
 	time2 "time"
 )
 

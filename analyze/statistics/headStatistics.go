@@ -1,13 +1,13 @@
 package statistics
 
 import (
-	"endlessh-analyzer/database"
 	"github.com/hako/durafmt"
 	"github.com/olekukonko/tablewriter"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"strconv"
 	"strings"
+	"tarpit-analyzer/database"
 	time2 "time"
 )
 
