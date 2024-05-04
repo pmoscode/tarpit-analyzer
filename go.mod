@@ -9,7 +9,7 @@ require (
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/schollz/progressbar/v3 v3.14.2
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/text v0.14.0
+	golang.org/x/text v0.15.0
 	gorm.io/driver/sqlite v1.5.5
 	gorm.io/gorm v1.25.10
 )
