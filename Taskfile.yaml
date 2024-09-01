@@ -4,7 +4,7 @@ tasks:
   upgrade:
     desc: Update go dependencies
     cmds:
-      - go get -u -d .
+      - go get -u .
 
   build:
     desc: Build the binary
