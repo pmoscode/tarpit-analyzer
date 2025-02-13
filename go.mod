@@ -3,7 +3,7 @@ module tarpit-analyzer
 go 1.22
 
 require (
-	github.com/alecthomas/kong v1.7.0
+	github.com/alecthomas/kong v1.8.1
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/olekukonko/tablewriter v0.0.5
 	github.com/paulmach/go.geojson v1.5.0
