@@ -2,7 +2,7 @@ module tarpit-analyzer
 
 go 1.24.0
 
-toolchain go1.24.0
+toolchain go1.24.1
 
 require (
 	github.com/alecthomas/kong v1.9.0
