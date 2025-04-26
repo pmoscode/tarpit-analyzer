@@ -2,8 +2,6 @@ module tarpit-analyzer
 
 go 1.24.2
 
-toolchain go1.24.2
-
 require (
 	github.com/alecthomas/kong v1.10.0
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
@@ -13,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/text v0.24.0
 	gorm.io/driver/sqlite v1.5.7
-	gorm.io/gorm v1.25.12
+	gorm.io/gorm v1.26.0
 )
 
 require (
