@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -76,8 +77,11 @@ func GetAttackTimeStatistics(db *database.DbData, start *time2.Time, end *time2.
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
-	table.SetHeader([]string{mode.label, "Attacks"})
-	table.SetAutoWrapText(false)
+	table.Header(mode.label, "Attacks")
+	table.Options(
+		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+	)
 
 	p := message.NewPrinter(language.English)
 	for _, item := range dataRows {

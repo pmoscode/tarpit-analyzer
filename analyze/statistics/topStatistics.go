@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/hako/durafmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
@@ -42,8 +43,11 @@ func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, d
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
-	table.SetHeader([]string{"Rank", "Country", "Attacks", "Sum attack time", "Avg attack time"})
-	table.SetAutoWrapText(false)
+	table.Header("Rank", "Country", "Attacks", "Sum attack time", "Avg attack time")
+	table.Options(
+		tablewriter.WithHeaderAutoWrap(tw.WrapNone),
+		tablewriter.WithRowAutoWrap(tw.WrapNone),
+	)
 
 	p := message.NewPrinter(language.English)
 	for idx, item := range dataRows {
