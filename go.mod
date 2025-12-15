@@ -11,7 +11,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3
 	golang.org/x/text v0.26.0
 	gorm.io/driver/sqlite v1.6.0
-	gorm.io/gorm v1.30.0
+	gorm.io/gorm v1.31.1
 )
 
 require (
