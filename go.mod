@@ -1,6 +1,6 @@
 module tarpit-analyzer
 
-go 1.24.2
+go 1.25.0
 
 require (
 	github.com/alecthomas/kong v1.12.0
@@ -9,7 +9,7 @@ require (
 	github.com/paulmach/go.geojson v1.5.0
 	github.com/schollz/progressbar/v3 v3.18.0
 	github.com/sirupsen/logrus v1.9.3
-	golang.org/x/text v0.26.0
+	golang.org/x/text v0.36.0
 	gorm.io/driver/sqlite v1.6.0
 	gorm.io/gorm v1.30.0
 )
