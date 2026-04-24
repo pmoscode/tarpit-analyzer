@@ -42,8 +42,24 @@ type Database struct {
 	db *gorm.DB
 }
 
+// testDatabasePath, when non-empty, overrides the default "data" path used by
+// CreateDbData, CreateDbCache, and CreateGenericDatabase.
+// Intended exclusively for tests. Not safe for concurrent use.
+var testDatabasePath string
+
+// SetTestDatabasePath overrides the SQLite file path (without ".db" extension)
+// used by all database factory functions. Pass an empty string to restore the
+// default ("data.db"). Must only be called from tests.
+func SetTestDatabasePath(path string) {
+	testDatabasePath = path
+}
+
 func (r *Database) initDatabase(dbFilename string, debug bool) {
-	r.initDatabaseDSN(dbFilename+".db", debug)
+	if testDatabasePath != "" {
+		r.initDatabaseDSN(testDatabasePath+".db", debug)
+	} else {
+		r.initDatabaseDSN(dbFilename+".db", debug)
+	}
 }
 
 // initDatabaseDSN opens a GORM database using the provided full DSN.

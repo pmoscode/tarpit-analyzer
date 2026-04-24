@@ -36,7 +36,9 @@ func (r *ReallyFreeGeoIpOrg) QueryGeoLocationAPI(ips *[]string, bar *progressbar
 		resp, err := http.Get("https://reallyfreegeoip.org/json/" + ip)
 		if err != nil {
 			log.Debugln("No response from request: ")
-			_ = resp.Body.Close()
+			if resp != nil {
+				_ = resp.Body.Close()
+			}
 			r.lastExecutionFinished = time2.Now()
 
 			return nil, err
