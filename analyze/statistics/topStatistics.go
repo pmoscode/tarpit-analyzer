@@ -42,8 +42,7 @@ func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, d
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
-	table.SetHeader([]string{"Rank", "Country", "Attacks", "Sum attack time", "Avg attack time"})
-	table.SetAutoWrapText(false)
+	table.Header("Rank", "Country", "Attacks", "Sum attack time", "Avg attack time")
 
 	p := message.NewPrinter(language.English)
 	for idx, item := range dataRows {
@@ -54,10 +53,10 @@ func GetTopStatistics(db *database.DbData, start *time2.Time, end *time2.Time, d
 		avgTFormat, _ := durafmt.ParseString(avgT.String())
 
 		line := []string{strconv.Itoa(idx + 1), item[0], p.Sprint(item[1]), sumTFormat.String(), avgTFormat.String()}
-		table.Append(line)
+		_ = table.Append(line)
 	}
 
-	table.Render()
+	_ = table.Render()
 
 	return "  TOP 5 ATTACKER COUNTRY STATISTICS\n" + builder.String(), nil
 }

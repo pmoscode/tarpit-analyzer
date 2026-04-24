@@ -123,3 +123,12 @@ func CreateDbCache(debug bool) (DbCache, error) {
 
 	return db, nil
 }
+
+// CreateDbCacheInMemory creates a DbCache backed by an in-memory SQLite database.
+// Intended for use in tests to avoid writing files to disk.
+func CreateDbCacheInMemory() (DbCache, error) {
+	db := DbCache{}
+	db.initDatabaseDSN("file::memory:?cache=shared&mode=memory", false)
+
+	return db, nil
+}
