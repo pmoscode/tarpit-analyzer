@@ -76,16 +76,15 @@ func GetAttackTimeStatistics(db *database.DbData, start *time2.Time, end *time2.
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
-	table.SetHeader([]string{mode.label, "Attacks"})
-	table.SetAutoWrapText(false)
+	table.Header(mode.label, "Attacks")
 
 	p := message.NewPrinter(language.English)
 	for _, item := range dataRows {
 		line := []string{item[0], p.Sprint(item[1])}
-		table.Append(line)
+		_ = table.Append(line)
 	}
 
-	table.Render()
+	_ = table.Render()
 
 	return "  " + strings.ToUpper(mode.label) + " ATTACKER STATISTICS\n" + builder.String(), nil
 }

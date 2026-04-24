@@ -3,6 +3,7 @@ package statistics
 import (
 	"github.com/hako/durafmt"
 	"github.com/olekukonko/tablewriter"
+	"github.com/olekukonko/tablewriter/tw"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 	"strconv"
@@ -52,11 +53,12 @@ func GetHeadStatistics(db *database.DbData, start *time2.Time, end *time2.Time, 
 	builder := new(strings.Builder)
 
 	table := tablewriter.NewWriter(builder)
-	table.SetHeader([]string{"Attack", ""})
-	table.SetAutoWrapText(false)
-	table.SetAlignment(tablewriter.ALIGN_LEFT)
-	table.AppendBulk(data)
-	table.Render()
+	table.Header("Attack", "")
+	table.Configure(func(cfg *tablewriter.Config) {
+		cfg.Row.Alignment.Global = tw.AlignLeft
+	})
+	_ = table.Bulk(data)
+	_ = table.Render()
 
 	return "  GLOBAL STATISTICS\n" + builder.String()
 }

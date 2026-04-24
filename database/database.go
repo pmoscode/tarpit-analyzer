@@ -42,7 +42,29 @@ type Database struct {
 	db *gorm.DB
 }
 
+// testDatabasePath, when non-empty, overrides the default "data" path used by
+// CreateDbData, CreateDbCache, and CreateGenericDatabase.
+// Intended exclusively for tests. Not safe for concurrent use.
+var testDatabasePath string
+
+// SetTestDatabasePath overrides the SQLite file path (without ".db" extension)
+// used by all database factory functions. Pass an empty string to restore the
+// default ("data.db"). Must only be called from tests.
+func SetTestDatabasePath(path string) {
+	testDatabasePath = path
+}
+
 func (r *Database) initDatabase(dbFilename string, debug bool) {
+	if testDatabasePath != "" {
+		r.initDatabaseDSN(testDatabasePath+".db", debug)
+	} else {
+		r.initDatabaseDSN(dbFilename+".db", debug)
+	}
+}
+
+// initDatabaseDSN opens a GORM database using the provided full DSN.
+// Use this directly when a custom DSN (e.g. in-memory) is required.
+func (r *Database) initDatabaseDSN(dsn string, debug bool) {
 
 	logLevel := logger.Silent
 	if debug {
@@ -59,7 +81,7 @@ func (r *Database) initDatabase(dbFilename string, debug bool) {
 		},
 	)
 
-	db, err := gorm.Open(sqlite.Open(dbFilename+".db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger:      newLogger,
 		PrepareStmt: true,
 	})
@@ -214,4 +236,11 @@ func CreateGenericDatabase(debug bool) (*Database, error) {
 	db.initDatabase("data", debug)
 
 	return &db, nil
+}
+
+// ExecRaw executes a raw SQL statement (INSERT, UPDATE, DELETE).
+// Intended for use in tests that need to manipulate DB state directly.
+func (r *Database) ExecRaw(query string, args ...interface{}) error {
+	result := r.db.Exec(query, args...)
+	return result.Error
 }
