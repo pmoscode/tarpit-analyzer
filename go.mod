@@ -7,7 +7,7 @@ require (
 	github.com/hako/durafmt v0.0.0-20210608085754-5c1018a4e16b
 	github.com/olekukonko/tablewriter v1.1.4
 	github.com/paulmach/go.geojson v1.5.0
-	github.com/schollz/progressbar/v3 v3.19.0
+	github.com/schollz/progressbar/v3 v3.19.1
 	github.com/sirupsen/logrus v1.9.4
 	golang.org/x/text v0.38.0
 	gorm.io/driver/sqlite v1.6.0
