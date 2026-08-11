@@ -4,6 +4,7 @@ tasks:
   upgrade:
     desc: Update go dependencies
     cmds:
+      - go get -u go@latest
       - go get -u .
 
   build:
